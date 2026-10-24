@@ -259,6 +259,9 @@ package final class StreamCoordinator {
     /// subscribed, while Share clipboard with devices (`HostConfig.shareClipboard`) is on. Looks at
     /// nothing while nobody subscribes.
     let clipboard: HostClipboard
+    /// The Mac's text focus (kind 33, HostTextFocus; docs/keyboard-auto-plan.md), for the devices that
+    /// subscribed: after their clicks, and while the caret moves in a text field.
+    let textFocus: HostTextFocus
     /// TEST ONLY. `SILL_TEST_MENU_PID=<pid>` on a --synthetic host: the test pattern's menus are that
     /// process's (the gates' fixture, Scripts/menufixture.swift), read and pressed through the same
     /// code, never activated (the Desktop's rule). Nil otherwise; `testMenuLine` is what `start`
@@ -320,6 +323,8 @@ package final class StreamCoordinator {
         launchID = launch
         // A synthetic host shares a pasteboard of its own, never this Mac's clipboard.
         clipboard = HostClipboard(server: server, enabled: config.shareClipboard, launchID: launch, synthetic: synthetic)
+        // A synthetic host reads no Accessibility either: its stand-in is TEST ONLY SILL_TEST_TEXT_FOCUS.
+        textFocus = HostTextFocus(server: server, synthetic: synthetic)
         let hook = Self.testMenuHook(synthetic: synthetic)
         testMenuPID = hook.pid
         testMenuLine = hook.line
@@ -401,6 +406,7 @@ package final class StreamCoordinator {
                 if self.flipWait == id { self.flipWait = nil }
                 self.menus.clientLeft(connection)
                 self.clipboard.clientLeft(connection)
+                self.textFocus.clientLeft(connection)
                 self.releaseKeys(of: id)
                 self.status.update { $0.devices.removeAll { $0.id == id } }
                 // The last device at home left devices away behind: the away quality, at once.
@@ -574,6 +580,8 @@ package final class StreamCoordinator {
     package func start(preselect: String?, promptForPermissions: Bool = true) async {
         for line in testHookLines { print(line) }
         if let line = clipboard.testHookLine { print(line) }   // TEST ONLY, and only with one of its variables set
+        if let line = textFocus.testHookLine { print(line) }   // TEST ONLY, the same
+        textFocus.sourceRect = { [weak self] in self?.currentSourceRect() }
         if !synthetic, promptForPermissions { InputInjector.ensureAccessibility() }   // prompts once; input is dropped silently without it
         if softwareOnly {
             // TEST ONLY: a gate that must never touch the Mac's one hardware encoder (Noah may be
@@ -931,6 +939,8 @@ package final class StreamCoordinator {
             if !synthetic { raiseIfInteracting(event) }
             deliver(event, in: rect, from: device)
             desktopInputMayActivate(event)
+            // A subscriber's click: the focus is looked at after it (HostTextFocus).
+            textFocus.input(event, from: connection)
         case .gesture:
             // A three- or four-finger gesture (docs/trackpad-gestures-plan.md §7.4), which the Mac
             // turns into its own shortcut. At most `gesturesPerSecond` a second per connection: a
@@ -1029,6 +1039,9 @@ package final class StreamCoordinator {
             // The clipboard (HostClipboard): a subscription, a device's text, or its stop. No `await`:
             // it reads and writes the pasteboard at once, and says nothing per copy.
             clipboard.received(message.payload, from: connection, who: deviceName(connection))
+        case .textFocus:
+            // The text focus (HostTextFocus): a subscription or its stop.
+            textFocus.received(message.payload, from: connection, who: deviceName(connection))
         case .pressMenuItem:
             guard let r = Wire.decode(PressMenuItem.self, from: message.payload) else { return }
             // One of the Mac's menu items chosen from a device acts as a click on it would, and may
@@ -2322,7 +2335,8 @@ package final class StreamCoordinator {
         StreamMessage(kind: .windowList, timestamp: Date().timeIntervalSince1970, isKeyframe: false,
                       payload: Wire.encode(WindowList(macName: macName, windows: catalog.infos, active: active, launchID: launchID,
                                                       hostVersion: hostVersion, protocol: SillProtocol.current,
-                                                      gestures: TrackpadGesture.generation, clipboard: clipboard.advertised)))
+                                                      gestures: TrackpadGesture.generation, clipboard: clipboard.advertised,
+                                                      textFocus: textFocus.advertised)))
     }
 
     private func broadcastList() { server.broadcast(listMessage()) }

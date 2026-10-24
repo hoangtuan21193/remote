@@ -787,6 +787,20 @@ final class StreamClient: ObservableObject {
     /// Mac takes and sends (`WindowList.clipboard`, 1 for text), nil from a Mac before it or with Share
     /// clipboard with devices off. Cleared with the session.
     @Published var hostClipboard: Int?
+    /// The Mac's text focus (kind 33, StreamClient+TextFocus, docs/keyboard-auto-plan.md): whether this
+    /// session's Mac reports it (`WindowList.textFocus`, 1), nil from a Mac before it. Cleared with the
+    /// session.
+    @Published var hostTextFocus: Int?
+    /// The Mac's last report, numbered: the stream screen opens or closes the keyboard by it.
+    @Published var textFocusEvent: TextFocusEvent?
+    /// The caret of the text field the Mac's focus is in, as fractions of the frame; nil out of one or
+    /// when the Mac does not say where it is. The input view keeps it above the keyboard.
+    @Published var textCaret: TextFocusRect?
+    /// This connection sent its kind 33 subscription and no stop since.
+    var textFocusSubscribed = false
+    /// When this device last clicked (a left button's up, systemUptime): a report answers a click of
+    /// at most `TextFocusPolicy.tapWindow` ago.
+    var lastClickAt: Double?
     /// The chip "Paste on ‹Mac›" is offered (ClipboardPolicy.offersChip) until it is used, dismissed or
     /// its time is up; the stream screen hides it while something is open over the stream.
     @Published var clipboardChip = false
@@ -2376,6 +2390,7 @@ final class StreamClient: ObservableObject {
         menusMoved()
         // The Mac keeps the clipboard's subscription per connection: the new one subscribes too.
         clipboardMoved()
+        textFocusMoved()
         if fenced {
             DispatchQueue.main.asyncAfter(deadline: .now() + Self.fenceTimeout) { [weak self] in
                 guard let self, let released = self.link.release(old) else { return }
@@ -3168,6 +3183,7 @@ final class StreamClient: ObservableObject {
         resetMenus()
         // Nor the clipboard's subscription, its chip or its note.
         resetClipboard()
+        resetTextFocus()
     }
 
     // MARK: - Client → host
@@ -3260,6 +3276,8 @@ final class StreamClient: ObservableObject {
         // Every input passes here, a hover and a flick's coast included: the tour's rule counts it
         // as something happening (StreamScreen.considerTour).
         lastInputAt = ProcessInfo.processInfo.systemUptime
+        // A click: the Mac's text focus after it answers it (TextFocusPolicy.answer).
+        if case .pointer(.leftUp, _, _) = event { lastClickAt = lastInputAt }
         #if DEBUG
         // The tour takes every touch and the keyboard while it shows, and holds back the pointer's
         // move to a new frame's middle, so nothing should get here then; the one case expected is a
@@ -3633,6 +3651,8 @@ final class StreamClient: ObservableObject {
                 if self.hostGestures != list.gestures { self.hostGestures = list.gestures }
                 // The clipboard: subscribe (or stop) as the Mac's word and this device's switch say.
                 self.hostClipboardChanged(list.clipboard)
+                // The text focus: subscribe (or stop) as the Mac's word and this device's switch say.
+                self.hostTextFocusChanged(list.textFocus)
                 if !self.sessionListed {
                     self.sessionListed = true
                     #if DEBUG
@@ -3782,6 +3802,13 @@ final class StreamClient: ObservableObject {
             DispatchQueue.main.async {
                 guard self.connection === from else { return }
                 self.receiveClipboard(data)
+            }
+        case .textFocus:
+            // The Mac's text focus (StreamClient+TextFocus). Only from the current connection.
+            let from = connection
+            DispatchQueue.main.async {
+                guard self.connection === from else { return }
+                self.receiveTextFocus(data)
             }
         case .macMenu:
             // The Mac's menus: a top level, or the answer to one of this connection's kind 27s or 25s

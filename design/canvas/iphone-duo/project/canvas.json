@@ -1,23 +1,104 @@
 {
   "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-10-25T10:00:00Z"},
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-25T10:00:00Z"
+  },
   "title": "Rimoto — iPhone Duo",
-  "launch": {"view": "canvas"},
+  "launch": {
+    "view": "canvas"
+  },
   "pages": [],
   "boards": {
-    "Main.dc.html": {"x": 0, "y": 0, "w": 951, "h": 669, "title": "Book pose — one stream across the fold"},
-    "FlatLandscape.dc.html": {"x": 1031, "y": 0, "w": 951, "h": 669, "title": "Open flat, sideways"},
-    "Laptop.dc.html": {"x": 0, "y": 1069, "w": 669, "h": 951, "title": "Laptop pose — split at the fold"},
-    "FlatPortrait.dc.html": {"x": 749, "y": 1069, "w": 669, "h": 951, "title": "Open flat, upright"},
-    "ConnectLaptop.dc.html": {"x": 1498, "y": 1069, "w": 669, "h": 951, "title": "Connect — laptop pose"},
-    "CoverUpright.dc.html": {"x": 0, "y": 2420, "w": 466, "h": 678, "title": "Cover — upright"},
-    "CoverSideways.dc.html": {"x": 546, "y": 2420, "w": 678, "h": 466, "title": "Cover — on its side"}
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Book pose — one stream across the fold"
+    },
+    "FlatLandscape.dc.html": {
+      "x": 1031,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Open flat, sideways"
+    },
+    "Laptop.dc.html": {
+      "x": 0,
+      "y": 1069,
+      "w": 669,
+      "h": 951,
+      "title": "Laptop pose — split at the fold"
+    },
+    "FlatPortrait.dc.html": {
+      "x": 749,
+      "y": 1069,
+      "w": 669,
+      "h": 951,
+      "title": "Open flat, upright"
+    },
+    "ConnectLaptop.dc.html": {
+      "x": 1498,
+      "y": 1069,
+      "w": 669,
+      "h": 951,
+      "title": "Connect — laptop pose"
+    },
+    "CoverUpright.dc.html": {
+      "x": 0,
+      "y": 2420,
+      "w": 466,
+      "h": 678,
+      "title": "Cover — upright"
+    },
+    "CoverSideways.dc.html": {
+      "x": 546,
+      "y": 2420,
+      "w": 678,
+      "h": 466,
+      "title": "Cover — on its side"
+    },
+    "KeyboardBook.dc.html": {
+      "x": 4124,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Book pose — keyboard up"
+    }
   },
-  "order": ["Main.dc.html", "FlatLandscape.dc.html", "Laptop.dc.html", "FlatPortrait.dc.html", "ConnectLaptop.dc.html", "CoverUpright.dc.html", "CoverSideways.dc.html"],
+  "order": [
+    "Main.dc.html",
+    "FlatLandscape.dc.html",
+    "KeyboardBook.dc.html",
+    "Laptop.dc.html",
+    "FlatPortrait.dc.html",
+    "ConnectLaptop.dc.html",
+    "CoverUpright.dc.html",
+    "CoverSideways.dc.html"
+  ],
   "notes": {
-    "t1": {"x": 0, "y": -300, "text": "Inner display, on its side", "kind": "title1", "maxW": 1982},
-    "t2": {"x": 0, "y": 769, "text": "Inner display, upright", "kind": "title1", "maxW": 2167},
-    "t3": {"x": 0, "y": 2120, "text": "Cover display", "kind": "title1", "maxW": 1224}
+    "t1": {
+      "x": 0,
+      "y": -300,
+      "text": "Inner display, on its side",
+      "kind": "title1",
+      "maxW": 5075
+    },
+    "t2": {
+      "x": 0,
+      "y": 769,
+      "text": "Inner display, upright",
+      "kind": "title1",
+      "maxW": 2167
+    },
+    "t3": {
+      "x": 0,
+      "y": 2120,
+      "text": "Cover display",
+      "kind": "title1",
+      "maxW": 1224
+    }
   },
   "designSystems": []
 }

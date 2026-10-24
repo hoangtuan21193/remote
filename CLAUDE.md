@@ -36,9 +36,9 @@ When a feature lands, add its entry at the top of `docs/HISTORY.md`, not here.
 
 Three halves sharing one wire format:
 - **`Sources/StreamProtocol`** (iOS + macOS): 14-byte header + payload framing, message kinds
-  0–28 and 32 both ways (`StreamMessage.swift`), and the JSON payloads, one file per feature
+  0–28, 32 and 33 both ways (`StreamMessage.swift`), and the JSON payloads, one file per feature
   (`Switcher`, `HostSettings`, `Remote`, `Pairing`, `Compatibility`, `Pointer`, `MacMenu`,
-  `Gesture`, `Clipboard`, …). Change the wire in one place; see the Compatibility floor below.
+  `Gesture`, `Clipboard`, `TextFocus`, …). Change the wire in one place; see the Compatibility floor below.
 - **Mac host, `Sources/SillHost`** (library target `SillHostCore`, no product, reached with
   `package` access) behind two executables: the CLI `SillHost` (`Sources/SillHostCLI`) and
   Sill.app's `SillMenuBar` (`Sources/SillMenuBar`, an LSUIElement AppKit app with SwiftUI panes).

@@ -47,7 +47,12 @@ The full Layout and Build-and-run reference that used to live in CLAUDE.md (move
   which change of the Mac's pasteboard the host sends and to whom, and only
   while macOS allows every read (`MacAccess`); the device's subscription,
   which text from the Mac it writes, a Paste's receipt, the chip and its time,
-  every word; pure, `Tests/checks/clipboard`).
+  every word; pure, `Tests/checks/clipboard`). `TextFocus.swift` — `TextFocus`
+  (kind 33, both ways: `editable`, `caret` as fractions of the frame, `tap`, a
+  device's `stop`) and `TextFocusPolicy` (the roles that take text, the host's
+  looks after a click and its follow, the caret's fractions, which report goes
+  out, what a device does with one, its subscription; pure,
+  `Tests/checks/textfocus`; docs/keyboard-auto-plan.md).
 - `Sources/SillHost/` — the `SillHostCore` library. `StreamCoordinator` (main
   actor; owns the pipeline, switches sources on client request, raises the
   picked window in regular mode (never on the virtual display), applies
@@ -73,7 +78,11 @@ The full Layout and Build-and-run reference that used to live in CLAUDE.md (move
   line a subscription and none per copy; a synthetic host's own pasteboard,
   the TEST ONLY SILL_TEST_PASTEBOARD, SILL_TEST_CLIPBOARD_LOG and
   SILL_TEST_CLIPBOARD_ACCESS; `MacClipboard`, macOS's paste privacy for the
-  look and for Settings › General's `ClipboardSection`),
+  look and for Settings › General's `ClipboardSection`), `HostTextFocus` (the
+  text focus's host side: who subscribed, the looks at the focused element
+  through Accessibility after a subscriber's click and every 0.25 s while it is
+  a text field, `AXManualAccessibility` for Electron apps; the TEST ONLY
+  SILL_TEST_TEXT_FOCUS on a synthetic host),
   `AwayPolicy` (who counts as away, when the away quality is the target, its
   two lines; pure, `Tests/checks/away-quality`), `LinkJudge` (each device's
   link judged once a second from the sweep: fine, behind, stalled, the carried
@@ -572,7 +581,16 @@ The full Layout and Build-and-run reference that used to live in CLAUDE.md (move
   receipt, a ping whose pong says the Mac read it; pbxproj AC64/FC64) and `ClipboardChip`
   (the chip and `ClipboardPasteButton`, the system's Paste control;
   AD64/FD64); StreamScreen places the chip, the Settings panel's This iPad
-  group has Share Clipboard and Paste on ‹Mac›. The
+  group has Share Clipboard and Paste on ‹Mac›. The keyboard at a text field
+  (docs/keyboard-auto-plan.md): `StreamClient+TextFocus` (the kind 33
+  subscription, the last report and caret, the last click; pbxproj AE64/FE64),
+  `KeyboardAccessoryBar` (the Mac keys bar, the input view's accessory view;
+  AE65/FE65), `KeyboardLift` (how far the picture slides up; pure,
+  `Tests/checks/keyboard-lift`; AE66/FE66), `ModifierLatch` in KeyChords.swift
+  (held and locked modifiers, the key row's and the bar's); StreamScreen opens
+  and closes the keyboard by `TextFocusPolicy.answer` through
+  `InputOverlayProxy.openForFocus`/`closeForFocus`, and the Settings panel has
+  Open Keyboard Automatically. The
   first-run tour: `TourPolicy` (its steps and targets per layout, the halves,
   a phone's rows and sideways; when it shows by itself, what it remembers,
   what a session decided and the reconnect's, a rotation mid-run, the crease,
@@ -736,6 +754,8 @@ SILL_TEST_LOOPBACK=1 SILL_TEST_HOTKEYS='108=off,173=off' .build/release/SillHost
 swift run -c release SillHost --no-clipboard  # share nothing of the clipboard with devices (on by default, as in Sill.app)
 SILL_TEST_LOOPBACK=1 SILL_TEST_SOFTWARE_ENCODER=1 SILL_TEST_NO_ROUTER=1 SILL_TEST_PASTEBOARD=me.saffer.sill.test.x SILL_TEST_CLIPBOARD_LOG=1 .build/release/SillHost --synthetic   # the clipboard on a pasteboard of its own (never this Mac's), each decision printed with sizes
 python3 Scripts/sillclient.py PORT 6 none --clipboard --copy=hello@2 --expect=clipboard=none   # subscribe, send text as a device's Paste does; each kind 32 printed
+echo field > $T/focus; SILL_TEST_LOOPBACK=1 SILL_TEST_SOFTWARE_ENCODER=1 SILL_TEST_NO_ROUTER=1 SILL_TEST_TEXT_FOCUS=$T/focus .build/release/SillHost --synthetic   # TEST ONLY: the text focus read from the file at each look (field, none, or x,y,w,h), never Accessibility
+python3 Scripts/sillclient.py PORT 8 desktop --textfocus --tap=0.4,0.5@2   # subscribe to kind 33 and click; each report printed ("textfocus at 2.153s: editable=1 tap=1 caret=…")
 SILL_TOUCHRIG_SIM='Sill touchrig' Tests/touchrig/run.sh new && Tests/touchrig/run.sh --rev origin/main base && Tests/touchrig/compare.py .build/touchrig/base.log .build/touchrig/new.log   # the surfaces under synthesized touches
 Tests/checks/run-all.sh                 # every pure check, as CI runs them (~5 min; --mutants adds the mutants, well over an hour)
 Scripts/pacing/run.sh                   # remote pacing and the link's judge, this tree against origin/main, no encoder, all on loopback (~25 min; --full ~45; --list)

@@ -52,6 +52,49 @@ struct KeyModifiers: OptionSet {
     }
 }
 
+/// The modifiers the key row and the Mac keys bar hold for the next key, as iOS's shift does
+/// (docs/keyboard-auto-plan.md, D7): a tap holds one for the next key, which spends it; a second tap
+/// within `doubleTap` locks it, and a locked one stays through every key until it is tapped again.
+/// `held` is what the next key carries, the locked ones among them.
+struct ModifierLatch: Equatable {
+    private(set) var held: KeyModifiers = []
+    private(set) var locked: KeyModifiers = []
+    /// When each modifier was last held by a tap (systemUptime), for the double tap.
+    private var heldAt: [UInt64: Double] = [:]
+
+    /// The longest gap between the two taps that lock, in seconds (iOS's shift: about a third).
+    static let doubleTap = 0.35
+
+    init(held: KeyModifiers = []) { self.held = held }
+
+    /// A tap on `flag`'s key at `time`: off to held, held to locked when it came within `doubleTap`
+    /// (else back off), locked to off.
+    mutating func tap(_ flag: KeyModifiers, at time: Double) {
+        if !locked.isDisjoint(with: flag) {
+            locked.subtract(flag)
+            held.subtract(flag)
+        } else if held.isSuperset(of: flag) {
+            if let at = heldAt[flag.rawValue], time - at >= 0, time - at <= Self.doubleTap {
+                locked.formUnion(flag)
+            } else {
+                held.subtract(flag)
+            }
+        } else {
+            held.formUnion(flag)
+            heldAt[flag.rawValue] = time
+        }
+    }
+
+    /// A key, a character or a click used what is held: only the locked ones stay.
+    mutating func spend() { held = locked }
+
+    /// Everything let go (the keyboard went, a session ended).
+    mutating func clear() {
+        held = []
+        locked = []
+    }
+}
+
 enum KeyChord {
     /// One key with `modifiers`, as a keyboard sends it: each modifier's own key down, the key down
     /// and up carrying them all, each modifier's key up (`modifiersDown`, `modifiersUp`). With nothing

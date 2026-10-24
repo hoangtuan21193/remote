@@ -32,11 +32,31 @@ final class InputOverlayView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
     /// The assistant item's groups, put back when the person's own keyboard holds it.
     private var assistantGroups: (leading: [UIBarButtonItemGroup], trailing: [UIBarButtonItemGroup])?
 
-    /// Modifiers the portrait key row is holding down for the next keystroke. Empty in landscape
-    /// unless the user latched one before rotating.
+    /// Modifiers the portrait key row or the Mac keys bar is holding down for the next keystroke
+    /// (ModifierLatch's `held`), and those of them locked, which a keystroke does not spend.
     var latchedModifiers: KeyModifiers = []
+    var lockedModifiers: KeyModifiers = []
     /// Fires once a latch has been spent, so the key row can un-highlight itself.
     var onModifiersConsumed: (() -> Void)?
+    /// A tap on one of the Mac keys bar's modifiers (ModifierLatch.tap).
+    var onLatchTap: (KeyModifiers) -> Void = { _ in }
+    /// The Mac keys bar's keys, as the key row's go (`StreamClient.sendFromKeyRow`).
+    var sendFromBar: (InputEvent) -> Void = { _ in }
+
+    /// The Mac's caret while its focus is in a text field (`StreamClient.textCaret`), as fractions of
+    /// the frame; nil out of one. The picture slides up to keep it above the keyboard (KeyboardLift).
+    var caretFraction: TextFocusRect? { didSet { if caretFraction != oldValue { updateLift() } } }
+    /// How far the picture is slid up now (the stream screen applies it to this view and the video
+    /// together), and where a new lift goes.
+    var lift: CGFloat = 0
+    var onLift: (CGFloat) -> Void = { _ in }
+    /// The top of the panel this view slides in, in the window (the stream screen measures it): where
+    /// this view's top is with no lift.
+    var panelTop: CGFloat? { didSet { if panelTop != oldValue { updateLift() } } }
+    /// The last tap's point in this view, the caret's stand-in while the Mac says nothing of one.
+    private var lastTapPoint: CGPoint?
+    /// The software keyboard's frame on screen as UIKit last announced it; nil while it is down.
+    private var keyboardFrame: CGRect?
 
     /// Writes this device's own pointer and what drew it (`StreamClient.setOwnPointer`: a fraction of
     /// the video frame, nil for none). Only ever alongside what is sent anyway; it never sends
@@ -139,6 +159,13 @@ final class InputOverlayView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
         strokes.onSilenced = { [weak self] in self?.strokeSilenced() }
         strokes.onGesture = { [weak self] gesture, fingers in _ = self?.sendGesture(gesture, fingers) }
         addGestureRecognizer(strokes)
+
+        // The software keyboard's frame, for the lift.
+        let center = NotificationCenter.default
+        center.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)),
+                           name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        center.addObserver(self, selector: #selector(keyboardWillHide(_:)),
+                           name: UIResponder.keyboardWillHideNotification, object: nil)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -184,6 +211,7 @@ final class InputOverlayView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
     /// A finger's tap at `point`, in this view: the pointer goes there, then clicks.
     private func tap(at point: CGPoint) {
         setOwnPointer(nil, .none)
+        lastTapPoint = point
         guard sendPointer(.move, at: point, clamped: false) != nil else { return }
         sendPointer(.leftDown, at: point, clamped: false)
         sendPointer(.leftUp, at: point, clamped: false)
@@ -581,9 +609,70 @@ final class InputOverlayView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
     }
 
     private func consumeLatch() {
-        guard !latchedModifiers.isEmpty else { return }
-        latchedModifiers = []
+        guard latchedModifiers != lockedModifiers else { return }
+        latchedModifiers = lockedModifiers
         onModifiersConsumed?()
+    }
+
+    // MARK: The Mac keys bar (KeyboardAccessoryBar)
+
+    private lazy var accessoryBar: KeyboardAccessoryBar = {
+        let bar = KeyboardAccessoryBar(frame: CGRect(x: 0, y: 0, width: bounds.width, height: KeyboardAccessoryBar.height))
+        bar.press = { [weak self] usage in
+            guard let self else { return }
+            self.setOwnPointer(nil, .none)
+            KeyChord.press(usage, with: self.latchedModifiers).forEach(self.sendFromBar)
+            self.consumeLatch()
+        }
+        bar.tapModifier = { [weak self] flag in self?.onLatchTap(flag) }
+        bar.hide = { [weak self] in self?.keyboardProxy?.toggleKeyboard() }
+        return bar
+    }()
+
+    /// The bar over the person's own keyboard; none for a hardware keyboard's hold, which draws nothing.
+    override var inputAccessoryView: UIView? { holdsForHardwareKeyboard ? nil : accessoryBar }
+
+    /// The latch changed (the stream screen's state): the bar's modifiers light as it says.
+    func showLatch() { accessoryBar.show(held: latchedModifiers, locked: lockedModifiers) }
+
+    // MARK: The lift (KeyboardLift)
+
+    @objc private func keyboardWillChangeFrame(_ note: Notification) {
+        guard let end = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        keyboardFrame = end.height > 0 ? end : nil
+        updateLift()
+    }
+
+    @objc private func keyboardWillHide(_ note: Notification) {
+        keyboardFrame = nil
+        lastTapPoint = nil
+        updateLift()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        updateLift()
+    }
+
+    /// The lift for the caret (the Mac's, or the last tap) over the keyboard as it is now, told to the
+    /// stream screen when it changed. Only this view's own keyboard lifts the picture: not the drawer's
+    /// search field's, nor a hardware keyboard's hold.
+    private func updateLift() {
+        var top: CGFloat? = nil
+        if isFirstResponder, !holdsForHardwareKeyboard, let frame = keyboardFrame, let window, let panelTop {
+            top = KeyboardLift.keyboardTop(frame: frame, screen: window.screen.bounds,
+                                           frameTop: window.convert(frame, from: window.screen.coordinateSpace).minY,
+                                           viewTop: panelTop)
+        }
+        let caret = caretFraction.flatMap { KeyboardLift.caret(x: $0.x, y: $0.y, w: $0.w, h: $0.h, in: videoRect) }
+            ?? lastTapPoint.map(KeyboardLift.caret(forTap:))
+        let next = KeyboardLift.lift(caret: caret, keyboardTop: top, height: bounds.height, current: lift)
+        guard abs(next - lift) > 0.5 else { return }
+        #if DEBUG
+        print("lift: \(Int(lift)) → \(Int(next)) pt (keyboard top \(top.map { String(Int($0)) } ?? "none"), caret \(caret.map { "\(Int($0.minY))–\(Int($0.maxY))" } ?? "none"), view \(Int(bounds.height)) pt)")
+        #endif
+        lift = next
+        onLift(next)
     }
 
     // MARK: Who holds the keyboard (InputOverlayProxy, HardwareKeyboardPolicy)
@@ -623,6 +712,7 @@ final class InputOverlayView: UIView, UIKeyInput, UIGestureRecognizerDelegate {
         if resigned {
             releaseForwardedKeys()
             keyboardProxy?.resigned(self)
+            updateLift()
         }
         return resigned
     }
@@ -813,13 +903,43 @@ final class InputOverlayProxy {
     /// The hardware keyboard's holding never calls it.
     var onOwnChange: ((Bool) -> Void)?
 
-    /// The Keyboard button (and the portrait key row's keyboard cap).
-    func toggleKeyboard() { change("the Keyboard button") { $0.toggled() } }
+    /// The person's own keyboard came up for a text field on the Mac (`openForFocus`), not with the
+    /// button: only such a keyboard does a report take down again (TextFocusPolicy.answer).
+    private(set) var openedByFocus = false
+
+    /// Who holds the keyboard, as TextFocusPolicy sees it.
+    var focusKeyboard: TextFocusPolicy.Keyboard {
+        switch policy.hold {
+        case .none: return .down
+        case .automatic: return .hardware
+        case .own: return openedByFocus ? .byFocus : .byButton
+        }
+    }
+
+    /// The Keyboard button (and the portrait key row's keyboard cap, and the Mac keys bar's hide).
+    func toggleKeyboard() {
+        openedByFocus = false
+        change("the Keyboard button") { $0.toggled() }
+    }
+    /// A tap on a text field on the Mac (TextFocusPolicy.answer's open): the person's keyboard, as the
+    /// button would bring it, but a report's to take down.
+    func openForFocus() {
+        change("a text field on the Mac") { $0.shown(true) }
+        openedByFocus = policy.isOwn
+    }
+    /// A tap out of the text field whose report brought the keyboard up (TextFocusPolicy.answer's close).
+    func closeForFocus() {
+        guard openedByFocus else { return }
+        change("out of the Mac's text field") { $0.shown(false) }
+    }
     /// Takes the keyboard down or puts the person's back, and with it hardware-key forwarding to the
     /// Mac: the overlay forwards keys only while it is first responder. The Settings panel takes it
     /// down while open, so Esc reaches its Done button instead of the Mac, and puts the person's back
     /// after (a hardware keyboard's hold comes back by itself, `takers`).
-    func setKeyboard(shown: Bool) { change(shown ? "the person's keyboard back" : "taken down") { $0.shown(shown) } }
+    func setKeyboard(shown: Bool) {
+        openedByFocus = false
+        change(shown ? "the person's keyboard back" : "taken down") { $0.shown(shown) }
+    }
     /// A hardware keyboard attached or the last one went (HardwareKeyboardMonitor).
     func update(attached: Bool) { change(attached ? "a keyboard attached" : "the keyboard went") { $0.keyboard(attached: attached) } }
     /// What is open over the stream that takes the keyboard (StreamScreen).
@@ -880,6 +1000,7 @@ final class InputOverlayProxy {
             case .letGo: if view?.isFirstResponder == true { _ = view?.resignFirstResponder() }
             }
         }
+        if !policy.isOwn { openedByFocus = false }
         if policy.isOwn != reportedOwn {
             reportedOwn = policy.isOwn
             onOwnChange?(reportedOwn)
@@ -946,10 +1067,18 @@ struct InputOverlay: UIViewRepresentable {
     let proxy: InputOverlayProxy
     /// The person's own keyboard is up (the proxy's `onOwnChange`): never the hardware keyboard's hold.
     @Binding var isKeyboardShown: Bool
-    var latchedModifiers: KeyModifiers = []
-    var onModifiersConsumed: () -> Void = {}
+    /// The key row's and the Mac keys bar's modifiers (ModifierLatch).
+    @Binding var latch: ModifierLatch
     /// `StreamClient.sendGesture`; see `InputOverlayView.sendGesture`.
     var sendGesture: (TrackpadGestures.Gesture, Int) -> Bool = { _, _ in false }
+    /// The Mac keys bar's keys (`StreamClient.sendFromKeyRow`).
+    var sendFromBar: (InputEvent) -> Void = { _ in }
+    /// The Mac's caret (`StreamClient.textCaret`), and the picture's lift, which the stream screen
+    /// applies to this view and the video together.
+    var caret: TextFocusRect? = nil
+    @Binding var lift: CGFloat
+    /// The panel's top in the window (`InputOverlayView.panelTop`).
+    var panelTop: CGFloat? = nil
 
     func makeUIView(context: Context) -> InputOverlayView {
         let view = InputOverlayView(frame: .zero)
@@ -962,11 +1091,21 @@ struct InputOverlay: UIViewRepresentable {
         uiView.videoSize = videoSize
         uiView.send = send
         uiView.setOwnPointer = setOwnPointer
-        uiView.latchedModifiers = latchedModifiers
+        let latchNow = latch
+        uiView.latchedModifiers = latchNow.held
+        uiView.lockedModifiers = latchNow.locked
+        uiView.showLatch()
         uiView.sendGesture = sendGesture
-        // Called straight from a UIKit text-input callback, never from inside a SwiftUI update,
-        // so writing the binding here needs no hop.
-        uiView.onModifiersConsumed = onModifiersConsumed
+        uiView.sendFromBar = sendFromBar
+        // Called straight from a UIKit text-input callback or a bar key's action, never from inside a
+        // SwiftUI update, so writing the binding here needs no hop.
+        uiView.onModifiersConsumed = { latch.spend() }
+        uiView.onLatchTap = { latch.tap($0, at: ProcessInfo.processInfo.systemUptime) }
+        uiView.lift = lift
+        uiView.caretFraction = caret
+        uiView.panelTop = panelTop
+        // From layout and keyboard callbacks, which can come inside a SwiftUI update: a hop.
+        uiView.onLift = { next in DispatchQueue.main.async { lift = next } }
         proxy.onOwnChange = { shown in
             // Hops to the next runloop turn: resigning can happen inside a SwiftUI update
             // (a teardown, say), and writing the binding there is a "modifying state during

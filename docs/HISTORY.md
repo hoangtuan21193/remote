@@ -4,6 +4,33 @@ The "Current step" log and milestone notes that used to live in CLAUDE.md, moved
 
 ## Current step
 
+**The keyboard at a text field, the picture above it, and the Mac keys bar (2026-10-25, branch
+`slim-claude-md`; decided on a planboard, `.planboard/keyboard-auto/`; the plan, results and open
+tests are in `docs/keyboard-auto-plan.md`).** Asked: the keyboard opens when a tap lands in a text
+field on the Mac, the picture slides up out of its way, and a bar of the Mac's keys sits over it, as
+in Jump Desktop.
+- Wire: kind 33 `textFocus` (TextFocus.swift: `editable`, `caret` as fractions of the frame, `tap`,
+  a device's `stop`) and `WindowList.textFocus` (1); additive, subscribed as the clipboard is.
+- Host: `HostTextFocus` reads the focused element through Accessibility (never its text) 0.15 s and
+  0.45 s after a subscriber's click, then every 0.25 s while it is a text field; Electron apps are
+  asked for their tree (`AXManualAccessibility`). TEST ONLY `SILL_TEST_TEXT_FOCUS` on a synthetic host.
+- Device: the keyboard opens for a field after this device's click and closes at a tap elsewhere when
+  a field opened it (`TextFocusPolicy.answer`); Open Keyboard Automatically in Settings, on by default.
+  `KeyboardAccessoryBar` over the software keyboard: one scrolling row (esc, tab, ctrl, opt, cmd,
+  shift, arrows, F1–F12, home, end, page up and down, forward delete) and a hide button; the upright
+  phone's key row goes while it shows. Modifiers latch as iOS's shift (`ModifierLatch`: two taps lock),
+  the key row's too. `KeyboardLift` slides the picture up just enough to keep the caret (or the last
+  tap) 12 pt above the bar, measured against the panel's top.
+- Checks: `textfocus` (31 mutants), `keyboard-lift` (14), the latch in `key-strokes` (8 more); kind 33
+  in `compatibility`, `protocol`, `pointer-control`, `clipboard`, whose mutants moved with the lines.
+- Verified: the Mac build, the iOS simulator build, the wire with `sillclient.py --textfocus`, and on
+  an iPhone 16 simulator against a synthetic host (the keyboard opening and closing, the bar, the lift
+  on its side and its step for a new line, cmd held and spent, the switch).
+  Untested: a real Mac's Accessibility in real apps (TextEdit, Safari, Terminal, Electron, Chrome), a
+  real device, iPad and the Duo, iPadOS's floating keyboard, VoiceOver on the bar.
+- Design: "keyboard up" artboards on the iPhone (upright, on its side), iPad and iPhone Duo canvases;
+  the iPad's Settings panel shows the new switch.
+
 **The clipboard both ways (2026-10-14, branch `clipboard` from main at 985a733; issue #64; PR #78;
 the plan, its open questions with the default taken for each, the results and the review's fixes are
 in `docs/clipboard-plan.md`).** Noah: work on the clipboard (after #67/#68, #69, #59, #57, #58), text

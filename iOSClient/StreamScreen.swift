@@ -104,9 +104,15 @@ struct StreamScreen: View {
     @ObservedObject var client: StreamClient
     @State private var drawerOpen = false
     @State private var keyboardShown = false
-    /// Modifiers held down by the portrait key row until the next key, character or click uses
-    /// them. Lives up here so rotating the iPad does not drop a half-typed shortcut.
-    @State private var latched: KeyModifiers = []
+    /// Modifiers held down by the portrait key row and the Mac keys bar until the next key, character
+    /// or click uses them, or for good while locked (ModifierLatch). Lives up here so rotating the iPad
+    /// does not drop a half-typed shortcut.
+    @State private var latch = ModifierLatch()
+    /// How far the picture is slid up over the software keyboard (KeyboardLift), the landscape
+    /// layout's; the upright ones keep their own.
+    @State private var lift: CGFloat = 0
+    /// The stream panel's top in the window, which the lift is measured from.
+    @State private var panelTop: CGFloat?
     /// The bar's Keyboard button drives the overlay's first responder through this.
     @State private var overlay = InputOverlayProxy()
     /// The Aa control's text scale, device points per Mac point; nil means the Mac window has never
@@ -332,6 +338,18 @@ struct StreamScreen: View {
             }
         }
         .animation(.spring(duration: 0.25, bounce: 0.2), value: windowMenu)
+        // The Mac's text focus after this device's click (docs/keyboard-auto-plan.md): the keyboard
+        // comes up for a text field, and goes again at a tap elsewhere when a field brought it up
+        // (TextFocusPolicy.answer). Not while something open over the stream holds the keyboard's fate.
+        .onChange(of: client.textFocusEvent) { _, event in
+            guard let event, tour == nil, !overlayShown, !settingsOpen else { return }
+            switch TextFocusPolicy.answer(event.report, keyboard: overlay.focusKeyboard,
+                                          switchOn: StreamClient.openKeyboardOn, sinceTap: client.sinceLastClick) {
+            case .open: overlay.openForFocus()
+            case .close: overlay.closeForFocus()
+            case .keep: break
+            }
+        }
         .onChange(of: client.pendingLink) { _, link in
             // An outside link while streaming: the panel and the keyboard go first, as for Pair This iPad….
             if link != nil { openLinkOverlay() }
@@ -1047,7 +1065,7 @@ struct StreamScreen: View {
         PortraitStreamScreen(client: client, metrics: metrics, drawerOpen: $drawerOpen,
                              keyboardShown: $keyboardShown,
                              textScale: $textScale, scaleOpen: $scaleOpen, windowMenu: $windowMenu,
-                             latched: $latched, overlay: overlay,
+                             latch: $latch, overlay: overlay,
                              settingsOpen: settingsOpen,
                              setSettings: { setSettings($0, restoreKeyboard: $1) },
                              menusOpened: menusOpened, menusClosed: menusClosed,
@@ -1073,16 +1091,23 @@ struct StreamScreen: View {
                              setOwnPointer: { client.setOwnPointer($0, from: $1) },
                              proxy: overlay,
                              isKeyboardShown: $keyboardShown,
-                             latchedModifiers: latched,
-                             onModifiersConsumed: { latched = [] },
-                             sendGesture: { client.sendGesture($0, fingers: $1) })
+                             latch: $latch,
+                             sendGesture: { client.sendGesture($0, fingers: $1) },
+                             sendFromBar: { client.sendFromKeyRow($0) },
+                             caret: client.textCaret,
+                             lift: $lift,
+                             panelTop: panelTop)
             }
+            // Up over the keyboard, the video and the input view together, inside the panel.
+            .offset(y: -lift)
+            .animation(.easeOut(duration: 0.25), value: lift)
             .background(Palette.panel)
             .overlay(alignment: .top) { LinkLineView(text: shownLinkLine) }
             .clipShape(streamShape)
             .overlay(streamShape.strokeBorder(Color.white.opacity(0.09), lineWidth: 1))
             // The panel itself, inside the padding: the size the host fits the Mac window to.
             .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { panelSize = $0 })
+            .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .global).minY }, action: { panelTop = $0 })
             .tourTarget(.stream)
             .padding(8)
 
