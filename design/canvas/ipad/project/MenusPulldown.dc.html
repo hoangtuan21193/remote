@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menus pull-down</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#9BB7FF}a:hover{color:#C3D3FF}
+</style>
+</helmet>
+<div style="width: 1133px; height: 744px; position: relative; overflow: hidden; background: #000000; color: #EEF0F3; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif">
+
+  <div style="position: absolute; left: 0; top: 0; width: 1133px; height: 110px; background: #16181C"></div>
+  <div style="position: absolute; left: 22px; top: 34px; width: 66px; height: 66px; border-radius: 16px; background: #23262C" aria-hidden="true"></div>
+  <div style="position: absolute; left: 100px; top: 34px; height: 66px; display: flex; gap: 12px" aria-hidden="true">
+    <span style="width: 104px; border-radius: 10px; background: #26282D"></span><span style="width: 104px; border-radius: 10px; background: #26282D"></span><span style="width: 104px; border-radius: 10px; background: #26282D"></span><span style="width: 104px; border-radius: 10px; background: #26282D"></span>
+  </div>
+  <button aria-label="Menus" aria-expanded="true" style="position: absolute; left: 733px; top: 34px; width: 66px; height: 66px; border: 0; border-radius: 16px; background: #2C3550; color: #9BB7FF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font: 500 11px -apple-system, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M7 13h6M7 16h4"></path></svg>Menus</button>
+  <div style="position: absolute; left: 811px; top: 34px; height: 66px; display: flex; gap: 12px; opacity: 0.5" aria-hidden="true">
+    <span style="width: 66px; border-radius: 16px; background: #23262C"></span><span style="width: 66px; border-radius: 16px; background: #23262C"></span><span style="width: 66px; border-radius: 16px; background: #23262C"></span><span style="width: 66px; border-radius: 16px; background: #23262C"></span>
+  </div>
+
+  <div style="position: absolute; left: 8px; top: 118px; width: 1117px; height: 598px; border-radius: 12px; background: #1F2126; display: flex; justify-content: center; overflow: hidden" aria-hidden="true"><div style="width: 957px; background: #1E1E1E"></div></div>
+
+  <div role="menu" aria-label="Xcode menus" style="position: absolute; left: 520px; top: 108px; width: 250px; border-radius: 14px; background: rgba(44,44,48,0.97); box-shadow: 0 12px 40px rgba(0,0,0,0.55); padding: 6px 0; font-size: 15px">
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">File<span style="color: #A4ABB5">›</span></div>
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">Edit<span style="color: #A4ABB5">›</span></div>
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">View<span style="color: #A4ABB5">›</span></div>
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">Find<span style="color: #A4ABB5">›</span></div>
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: rgba(255,255,255,0.08)">Product<span style="color: #A4ABB5">›</span></div>
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">Debug<span style="color: #A4ABB5">›</span></div>
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">Window<span style="color: #A4ABB5">›</span></div>
+    <div role="menuitem" style="height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px">Help<span style="color: #A4ABB5">›</span></div>
+  </div>
+
+  <div role="menu" aria-label="Product" style="position: absolute; left: 782px; top: 260px; width: 250px; border-radius: 14px; background: rgba(44,44,48,0.97); box-shadow: 0 12px 40px rgba(0,0,0,0.55); padding: 6px 0; font-size: 15px">
+    <div role="menuitem" style="padding: 7px 16px; display: flex; flex-direction: column"><span>Run</span><span style="font-size: 12px; color: #A4ABB5">⌘R</span></div>
+    <div role="menuitem" style="padding: 7px 16px; display: flex; flex-direction: column"><span>Build</span><span style="font-size: 12px; color: #A4ABB5">⌘B</span></div>
+    <div role="menuitem" style="padding: 7px 16px; display: flex; flex-direction: column"><span>Test</span><span style="font-size: 12px; color: #A4ABB5">⌘U</span></div>
+    <div style="height: 1px; background: rgba(255,255,255,0.10); margin: 4px 0"></div>
+    <div role="menuitem" aria-disabled="true" style="padding: 7px 16px; display: flex; flex-direction: column; color: #6B717B"><span>Stop</span><span style="font-size: 12px">⌘.</span></div>
+    <div role="menuitem" style="padding: 7px 16px; display: flex; flex-direction: column"><span>Clean Build Folder…</span><span style="font-size: 12px; color: #A4ABB5">⇧⌘K</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1133,"height":744}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

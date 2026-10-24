@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Paired over the USB cable</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A64D6}a:hover{color:#084FA8}
+</style>
+</helmet>
+<div style="width: 440px; height: 190px; position: relative; overflow: hidden; background: #ECECEC; color: #1D1D1F; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; border-radius: 10px; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.25)">
+  <div style="height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 12px; position: relative">
+    <span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #28C840"></span>
+    <span style="position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; pointer-events: none">Paired over the USB Cable</span>
+  </div>
+  <div style="padding: 12px 22px; display: flex; gap: 12px">
+    <svg style="flex: none" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#28A745"></circle><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#FFF" stroke-width="2.4" stroke-linecap="round"></path></svg>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <b style="font-size: 14px">iPad is paired with this Mac.</b>
+      <span style="color: #3A3A3C; line-height: 18px">It paired by itself over the USB cable, and can connect over Wi‑Fi and nearby from now on too.</span>
+    </div>
+  </div>
+  <div style="position: absolute; right: 20px; bottom: 16px; display: flex; gap: 10px">
+    <button style="height: 24px; padding: 0 14px; border-radius: 6px; border: 0.5px solid rgba(0,0,0,0.2); background: #FFFFFF; font: 13px -apple-system, system-ui, sans-serif; color: #1D1D1F">Remove</button>
+    <button style="height: 24px; padding: 0 18px; border-radius: 6px; border: 0; background: #0A64D6; font: 13px -apple-system, system-ui, sans-serif; color: #FFFFFF">OK</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":440,"height":190}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

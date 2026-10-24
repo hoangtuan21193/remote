@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pair iPhone or iPad</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A64D6}a:hover{color:#084FA8}
+</style>
+</helmet>
+<div style="width: 440px; height: 600px; position: relative; overflow: hidden; background: #ECECEC; color: #1D1D1F; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; border-radius: 10px; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.25)">
+  <div style="height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 12px; position: relative">
+    <span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #28C840"></span>
+    <span style="position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; pointer-events: none">Pair iPhone or iPad</span>
+  </div>
+  <div style="padding: 14px 28px 20px 28px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center">
+    <h1 style="margin: 0; font-size: 15px; font-weight: 600">iPad on this network asked to pair.</h1>
+    <p style="margin: 0; color: #3A3A3C; line-height: 18px">Point it at this code, or tap Enter Code Instead and type the code.</p>
+    <svg width="180" height="180" viewBox="0 0 21 21" role="img" aria-label="Pairing code image" style="background: #FFFFFF; padding: 10px; border-radius: 8px" shape-rendering="crispEdges">
+      <path fill="#000" d="M0 0h7v7H0zM14 0h7v7h-7zM0 14h7v7H0z"></path>
+      <path fill="#FFF" d="M1 1h5v5H1zM15 1h5v5h-5zM1 15h5v5H1z"></path>
+      <path fill="#000" d="M2 2h3v3H2zM16 2h3v3h-3zM2 16h3v3H2zM8 0h1v1H8zM10 1h2v1h-2zM9 3h1v2H9zM11 4h2v1h-2zM8 6h1v1H8zM10 6h1v2h-1zM12 6h1v1h-1zM0 8h2v1H0zM3 8h2v1H3zM6 8h2v1H6zM9 9h3v1H9zM13 8h1v2h-1zM15 8h2v1h-2zM18 8h3v1h-3zM1 10h1v2H1zM4 10h1v1H4zM7 10h1v2H7zM14 10h2v1h-2zM17 10h1v2h-1zM19 11h2v1h-2zM2 12h3v1H2zM9 12h2v1H9zM12 12h1v2h-1zM15 12h1v1h-1zM8 14h2v1H8zM11 15h1v2h-1zM14 14h3v1h-3zM18 14h1v2h-1zM8 16h1v2H8zM13 16h2v1h-2zM16 17h2v1h-2zM19 17h2v1h-2zM10 18h2v1h-2zM14 19h1v2h-1zM8 20h1v1H8zM17 19h1v1h-1zM20 20h1v1h-1z"></path>
+    </svg>
+    <p style="margin: 0; color: #3A3A3C">Can’t scan? Tap Enter Code Instead, and type:</p>
+    <div style="display: grid; grid-template-columns: auto auto; column-gap: 14px; row-gap: 4px; text-align: left; align-items: baseline">
+      <span style="color: #6E6E73; text-align: right">Address</span><span>mac-studio.tail1234.ts.net<br><span style="color: #6E6E73">or 100.101.102.103</span></span>
+      <span style="color: #6E6E73; text-align: right">Code</span><span style="font: 600 22px ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: 1px">4815 1623 4209</span>
+    </div>
+    <p style="margin: 0; color: #6E6E73">Works once, for the next 4:52.</p>
+    <p style="margin: 0; font-size: 12px; color: #6E6E73; line-height: 16px">A paired device can see and control this Mac.<br>Didn’t ask for this? Click Cancel.</p>
+  </div>
+  <div style="position: absolute; right: 20px; bottom: 18px; display: flex; gap: 10px">
+    <button style="height: 24px; padding: 0 14px; border-radius: 6px; border: 0.5px solid rgba(0,0,0,0.2); background: #FFFFFF; font: 13px -apple-system, system-ui, sans-serif; color: #1D1D1F">Cancel</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":440,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

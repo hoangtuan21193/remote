@@ -22,6 +22,13 @@ Where things are written down:
   `-Sill…` launch arguments, harness cases). Look a hook up there before inventing one.
 - `docs/DEVELOPMENT.md`: building, running, permissions, troubleshooting, releasing.
 - `docs/release-checklist.md`, `docs/app-store-metadata.md`: releases and the App Store record.
+- **Design canvases** (`design/canvas/README.md`): every screen, one canvas per device — iPhone
+  https://claude.ai/artifact/BfwySRCcdAt1Fq77ysBEty, iPad
+  https://claude.ai/artifact/7SquPwJcDScq13HnTUVar1, iPhone Duo
+  https://claude.ai/artifact/GNodnPMzhbmAaVxg39jB2x, Mac
+  https://claude.ai/artifact/CuHyhiTKiGhsFPcQa4h3Lq. The artboards' source is in
+  `design/canvas/<device>/project/`. A screen changed in code changes its artboard in the same
+  change, and the other way round.
 
 When a feature lands, add its entry at the top of `docs/HISTORY.md`, not here.
 
