@@ -79,6 +79,13 @@
       "w": 951,
       "h": 669,
       "title": "Book pose — keyboard up"
+    },
+    "MenuStripOpen.dc.html": {
+      "x": 5155,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Book pose — a Mac menu open from the menu bar"
     }
   },
   "order": [
@@ -87,6 +94,7 @@
     "BarFolded.dc.html",
     "BarPeek.dc.html",
     "KeyboardBook.dc.html",
+    "MenuStripOpen.dc.html",
     "Laptop.dc.html",
     "FlatPortrait.dc.html",
     "ConnectLaptop.dc.html",
@@ -99,7 +107,7 @@
       "y": -300,
       "text": "Inner display, on its side",
       "kind": "title1",
-      "maxW": 5075
+      "maxW": 6106
     },
     "t2": {
       "x": 0,

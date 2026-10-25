@@ -563,7 +563,12 @@ The full Layout and Build-and-run reference that used to live in CLAUDE.md (move
   two or more; from each scene's `WindowSessionObserver`; asks for a rebuild)
   and `MacMenuButton` (the bars' Menus button: the bar's look, and
   `MacMenuTrigger`'s clear UIButton with the pull-down over it; `fits`, where
-  a bar holds it and still a whole thumbnail).
+  a bar holds it and still a whole thumbnail), and `MacMenuStrip` (the Mac's
+  menu bar as a 32 pt strip of titles under the landscape bar, at the top
+  edge 8 pt lower while the bar is hidden; each title a pull-down of its one
+  deferred element; Settings › Mac Menu Bar, `Sill.macMenuStrip`, on by
+  default) over `MenuStripLayout` (pure, `Tests/checks/menu-strip`: where
+  each title goes, off the fold, clear of the stashed tab, » for the rest).
   `PointerPresence` (the rules of the one pointer sprite: the Mac's
   arrow while the Mac or another device moved it last, this device's own only
   for the portrait trackpad; a kind 26's freshness; the network queue's feed
@@ -684,7 +689,8 @@ The full Layout and Build-and-run reference that used to live in CLAUDE.md (move
   (InstalledApps on a fake applications folder), `key-strokes` (the
   host's KeyStrokes and the device's KeyChords, against a model of the Mac's
   HID state table and of a Mac from before), `ledger`,
-  `menu-state` (iOSClient's MacMenuState), `menus` (the host's MenuFormat and
+  `menu-state` (iOSClient's MacMenuState), `menu-strip` (MenuStripLayout),
+  `menus` (the host's MenuFormat and
   MenuPolicy, and MacMenu.swift's JSON), `message-reader`, `origin`,
   `pairing-address`, `phone-portrait`, `pointer-control`, `pointer-presence`,
   `pointer-watch`, `policy` (with its `home.swift`), `protocol`,
@@ -948,7 +954,8 @@ another; the first guesses, `1000x710` / `710x1000` / `500x710` / `710x500`,
 have none), `-SillHinge
 closed|half|flat` (the hinge and a 40 pt fold across the middle of the longer
 side; without it the harness knows no hinge, even on the Duo's simulator),
-`-SillLive 1` (real client inside the frame), `-SillDrawer 1`, `-SillBarHidden YES` (the
+`-SillLive 1` (real client inside the frame), `-SillDrawer 1`, `-Sill.macMenuStrip NO` (the
+Mac menu bar strip off for that launch), `-SillBarHidden YES` (the
 landscape bar stashed in a tab on the trailing edge, as a PiP window; NO unfolds; read through @AppStorage, so it wins over a tap
 for that launch),
 `-SillActive none|desktop|<windowID>` (mock), `-SillHUD 1` (diagnostics overlay),

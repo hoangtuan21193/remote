@@ -53,6 +53,9 @@ struct HostSettingsPanel: View {
     /// This device's switch for the keyboard at a text field on the Mac (docs/keyboard-auto-plan.md):
     /// on unless turned off, shown while the Mac reports its text focus.
     @AppStorage(StreamClient.openKeyboardKey) private var openKeyboardOn = true
+    /// This device's switch for the Mac's menu bar along the top of the stream (MacMenuStrip): on
+    /// unless turned off, shown while the Mac sends its menus.
+    @AppStorage(StreamClient.menuStripKey) private var menuStripOn = true
     /// VoiceOver is on: it keeps three-finger swipes and taps for itself, so the This iPad group says
     /// its rows do the gestures instead.
     @State private var voiceOver = HostSettingsPanel.voiceOverRunning
@@ -508,6 +511,16 @@ struct HostSettingsPanel: View {
             }
             Footnote(text: ClipboardPolicy.Copy.footnote(on: clipboardOn, mac: mac, device: device))
         }
+        // The Mac's menu bar along the top of the stream: only while the Mac sends its menus.
+        if !client.menus.menus.isEmpty {
+            Rows {
+                Toggle(isOn: $menuStripOn) {
+                    Text("Mac Menu Bar").foregroundStyle(Palette.text)
+                }
+                .rowFrame()
+            }
+            Footnote(text: Self.menuStripFooter(mac: mac))
+        }
         // The keyboard at a text field (docs/keyboard-auto-plan.md): only while the Mac reports its focus.
         if (client.hostTextFocus ?? 0) >= TextFocusPolicy.generation {
             Rows {
@@ -537,6 +550,10 @@ struct HostSettingsPanel: View {
     }
 
     /// Under Open Keyboard Automatically.
+    static func menuStripFooter(mac: String) -> String {
+        "The menus of the app you see, File, Edit, View and the rest, in a thin bar along the top of the picture, as on \(mac). Tap one to open it. Held sideways; the Menus button has them everywhere."
+    }
+
     static func openKeyboardFooter(mac: String) -> String {
         "Tap a text field on \(mac) and the keyboard comes up; tap elsewhere and it goes. The picture slides up to keep what you type in view."
     }

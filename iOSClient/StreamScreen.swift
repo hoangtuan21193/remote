@@ -189,6 +189,8 @@ struct StreamScreen: View {
     @State private var barPeek = false
     /// Where the stashed bar's tab sits along the trailing edge, 0 (top) to 1 (bottom); the device's own.
     @AppStorage("SillBarStash") private var barStashY = 0.0
+    /// The Mac's menu bar as a strip along the top of the stream (MacMenuStrip), Settings' switch.
+    @AppStorage(StreamClient.menuStripKey) private var menuStripOn = true
     @State private var barPeekHide: Task<Void, Never>? = nil
     /// Larger Picture as it was in effect when the Settings panel opened (`largerPictureNow`), which
     /// the arrangement keeps until the panel closes; nil while it is closed. The panel hangs under row
@@ -1061,6 +1063,10 @@ struct StreamScreen: View {
         // fold, as the link's line), in the middle of the screen otherwise.
         let handleX = (DuoPosture.leadingPage(fold) ?? width) / 2
         let peeking = !barShown && barPeek
+        // The Mac's menu bar under the bar, at the top edge while the bar is hidden; the hidden bar
+        // comes down over it, and the stashed bar's tab sits over its trailing end.
+        let strip = menuStripOn && !client.menus.menus.isEmpty
+        let stripHeight = strip ? MacMenuStrip.height(atEdge: !barShown) : 0
         return VStack(spacing: 0) {
             if barShown {
                 topBar(bar, stripWidth: stripWidth, width: width)
@@ -1076,29 +1082,40 @@ struct StreamScreen: View {
             // Hidden, the way a Picture in Picture window is stashed: the stream takes the whole screen,
             // a tab waits on the trailing edge (`BarStash`), and the bar comes down over the stream (no
             // resize, no refit of the Mac window) and goes up again by itself (`BarPeek`).
-            contentArea(bar: bar, under: peeking ? bar.height : 0)
-                .overlay(alignment: .top) {
-                    if peeking {
-                        topBar(bar, stripWidth: stripWidth, width: width)
-                            .shadow(color: .black.opacity(0.45), radius: 14, y: 4)
-                            .overlay(alignment: .bottomLeading) {
-                                BarHandle(x: handleX, hide: { setBarPeek(false) }, keep: { setBarHidden(false) })
-                                    .opacity(scaleOpen ? 0 : 1)
-                                    .allowsHitTesting(!scaleOpen)
-                            }
-                            .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
-                    }
+            VStack(spacing: 0) {
+                if strip {
+                    MacMenuStrip(client: client, fold: fold.verticalBand.map { $0.minX...$0.maxX },
+                                 trailingRoom: barShown ? 0 : BarStash.touch.width, atEdge: !barShown,
+                                 onOpen: menusOpened, onClose: menusClosed)
+                        .opacity(scaleOpen ? 0.2 : 1)
+                        .allowsHitTesting(!scaleOpen)
+                        .transition(.opacity)
                 }
-                .overlay(alignment: .topTrailing) {
-                    if !barShown && !barPeek {
-                        BarStash(position: $barStashY, show: { setBarPeek(true) })
-                            .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
-                    }
+                contentArea(bar: bar, under: peeking ? max(0, bar.height - stripHeight) : 0)
+            }
+            .animation(.easeOut(duration: 0.18), value: strip)
+            .overlay(alignment: .top) {
+                if peeking {
+                    topBar(bar, stripWidth: stripWidth, width: width)
+                        .shadow(color: .black.opacity(0.45), radius: 14, y: 4)
+                        .overlay(alignment: .bottomLeading) {
+                            BarHandle(x: handleX, hide: { setBarPeek(false) }, keep: { setBarHidden(false) })
+                                .opacity(scaleOpen ? 0 : 1)
+                                .allowsHitTesting(!scaleOpen)
+                        }
+                        .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
                 }
-                // What the bar is used for keeps it down a while longer.
-                .onChange(of: client.active) { _, _ in if peeking { setBarPeek(true) } }
-                .onChange(of: textScale) { _, _ in if peeking { setBarPeek(true) } }
-                .onChange(of: keyboardShown) { _, _ in if peeking { setBarPeek(true) } }
+            }
+            .overlay(alignment: .topTrailing) {
+                if !barShown && !barPeek {
+                    BarStash(position: $barStashY, show: { setBarPeek(true) })
+                        .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
+                }
+            }
+            // What the bar is used for keeps it down a while longer.
+            .onChange(of: client.active) { _, _ in if peeking { setBarPeek(true) } }
+            .onChange(of: textScale) { _, _ in if peeking { setBarPeek(true) } }
+            .onChange(of: keyboardShown) { _, _ in if peeking { setBarPeek(true) } }
         }
     }
 

@@ -3330,6 +3330,11 @@ final class StreamClient: ObservableObject {
     /// does (`PhonePortraitLayout.largerPicture(switchOn:streaming:)`).
     static let largerPictureKey = "Sill.largerPicture"
 
+    /// This device's switch for the Mac's menu bar as a strip along the top of the stream (the
+    /// Settings panel's This iPhone group, 2026-10-25; MacMenuStrip): on unless turned off. The
+    /// device's own preference, never sent to the Mac; the landscape stream screen reads it.
+    static let menuStripKey = "Sill.macMenuStrip"
+
     /// A three- or four-finger gesture a surface decided (TrackpadGestures, StrokeObserver), to the
     /// Mac as kind 28, which turns it into its own shortcut (docs/trackpad-gestures-plan.md §6.3):
     /// only while this device's switch is on and the Mac says it takes gestures. While a window

@@ -4,6 +4,33 @@ The "Current step" log and milestone notes that used to live in CLAUDE.md, moved
 
 ## Current step
 
+**The Mac's menu bar as a strip along the top of the stream (2026-10-25, branch `slim-claude-md`;
+two comments on the iPhone Duo canvas: "the Mac app's menus, File, Edit, View, as a small bar at the
+top to pick from, as on macOS" and "a thin menu bar always at the top edge, with an option to show
+it").** On every landscape bar (the Duo open, its cover on its side, iPad and iPhone sideways).
+- Device: `MacMenuStrip` draws the streamed app's top level (MacMenuState, the same kind 24 the Menus
+  button uses; nothing new on the wire) as titles in a 32 pt strip under the bar, the app's own in
+  bold. While the bar is hidden it sits at the screen's top edge, 40 pt with the titles 8 pt lower
+  (the Duo simulator takes no touch in its top ~20 pt: a tap at 17 pt did nothing, 22 pt opened the
+  menu), and the hidden bar comes down over it; the stashed tab sits over its end. Each title is a
+  UIKit pull-down of its menu's one deferred element (MacMenuElements), fetched when it opens, as
+  the Menus button's; a stale top level or a disabled menu draws dimmed. Opening one counts as the
+  Menus pull-down for the stream screen (`menusOpened`: the drawer and Settings go; the hidden bar
+  waits). Only while the Mac sent menus; with only a note (no Accessibility) the Menus button says so.
+- Settings › This iPhone/iPad › Mac Menu Bar (`Sill.macMenuStrip`, on by default), shown while the
+  Mac sends menus. Upright layouts keep the Menus button alone.
+- `MenuStripLayout` (pure): titles left to right from 8 pt, 10 pt either side, never across the
+  Duo's fold band (a title that would cross starts after it), clear of the stashed tab's 52 pt, and
+  what does not fit in a » button at the end, in the Mac's order. Check `menu-strip` (17 cases and a
+  grid of 13,000 strips; 14 mutants), in CI's list.
+- Verified: the iOS simulator build; on the iPhone Duo simulator (the harness, `-SillMacMenu code`):
+  the book pose with the bar (titles skip the fold), a title opening its menu, the bar hidden (strip
+  at the top, tab over its end, a menu opening from it), the switch off, the cover on its side; the iPad 13 simulator's landscape
+  harness (the strip under the bar). Untested: a real Mac's menus through the strip, a press from it
+  reaching the Mac, iPhone sideways on a simulator, VoiceOver on the titles, a real device's top edge.
+- Design: the strip on the landscape artboards of the iPhone, iPad and iPhone Duo canvases; a new
+  Duo artboard with a menu open from it; the Settings panels show the switch.
+
 **The keyboard at a text field, the picture above it, and the Mac keys bar (2026-10-25, branch
 `slim-claude-md`; decided on a planboard, `.planboard/keyboard-auto/`; the plan, results and open
 tests are in `docs/keyboard-auto-plan.md`).** Asked: the keyboard opens when a tap lands in a text
