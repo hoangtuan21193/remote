@@ -31,6 +31,37 @@ in Jump Desktop.
 - Design: "keyboard up" artboards on the iPhone (upright, on its side), iPad and iPhone Duo canvases;
   the iPad's Settings panel shows the new switch.
 
+**The landscape bar stashes like a Picture in Picture window (2026-10-25, branch `slim-claude-md`;
+four comments on the iPhone Duo canvas: "make the top bar small, use the whole screen to remote",
+"a button in the right corner over the stream, see-through, that opens the tools", "that button is
+ugly, hide it the way a video player does", "no: like PiP when you stash it").** On every landscape
+bar (the Duo open, its cover on its side, iPad and iPhone sideways). Three earlier shapes went in
+this session and out again: a 32 pt strip, a 44 pt round button in the top trailing corner, a faint
+video-player capsule at the top.
+- Shown (as before, the default): a grabber (36×4 capsule, `BarHandle`) in the black gap under the
+  bar, in the middle of the screen, or of the leading page in the book pose (`DuoPosture.leadingPage`,
+  off the fold); a tap or a swipe up hides the bar.
+- Hidden (`@AppStorage("SillBarHidden")`, the device's choice): the stream takes the whole screen;
+  a 30×84 pt tab on the screen's trailing edge, at its top (8 pt down) at first (`BarStash`: rounded
+  on its inner side, the bar's colour at 78% over a material, a bold chevron pointing in), as iOS
+  stashes a PiP window. A fifth comment asked for it clearer, larger and in the top right corner
+  (it was 22×72, fainter, a fifth of the way down). A tap or a pull inward (its touch 52×100) brings
+  the bar down over the stream (`setBarPeek`): no resize, no refit of the Mac window; a drag up or
+  down moves the tab along the edge (`@AppStorage("SillBarStash")`, 0 to 1). It goes up by itself after 4 s (`BarPeek.seconds`) with nothing open from it (drawer,
+  Settings, the Aa ruler, a thumbnail's lights, the Menus pull-down); picking a window, Aa or the
+  keyboard restarts the clock. Its grabber: a tap or swipe up sends it up at once, a swipe down (or
+  VoiceOver's "Keep the bar shown") keeps it shown for good. The drawer and the Settings panel hang
+  under the bar come down (`contentArea(under:)`). The tour shows the bar as before (`barShown`).
+- The clipboard chip goes to the bottom corner while the bar is hidden
+  (`ClipboardPolicy.chipCorner(barFolded:)`, its check and a mutant; 73 of 73 caught).
+- On the Duo simulator the screen's top ~20 pt deliver no taps (the bar's Apps button there too).
+- Verified: the iOS simulator build; on the Duo simulator (`-SillLayout 951x669 -SillHinge half`)
+  the grabber hides the bar, the tab sits on the right edge and drags along it, a tap on it brings
+  the bar down over the stream, it goes up after 4 s.
+  Untested: a real device, the cover on its side, iPad, iPhone sideways, VoiceOver, a live stream.
+- Design: the grabber on every landscape artboard on the iPad, iPhone and iPhone Duo canvases; on
+  each, "bar hidden" (`BarFolded.dc.html`) and "hidden bar brought down" (`BarPeek.dc.html`).
+
 **The clipboard both ways (2026-10-14, branch `clipboard` from main at 985a733; issue #64; PR #78;
 the plan, its open questions with the default taken for each, the results and the review's fixes are
 in `docs/clipboard-plan.md`).** Noah: work on the clipboard (after #67/#68, #69, #59, #57, #58), text

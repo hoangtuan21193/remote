@@ -80,6 +80,20 @@
       "h": 1133,
       "title": "Add a Mac — upright"
     },
+    "BarFolded.dc.html": {
+      "x": 4852,
+      "y": 0,
+      "w": 1133,
+      "h": 744,
+      "title": "Stream — bar hidden"
+    },
+    "BarPeek.dc.html": {
+      "x": 6065,
+      "y": 0,
+      "w": 1133,
+      "h": 744,
+      "title": "Stream — hidden bar brought down"
+    },
     "KeyboardLandscape.dc.html": {
       "x": 7278,
       "y": 0,
@@ -93,6 +107,8 @@
     "StreamLandscape.dc.html",
     "AppsDrawer.dc.html",
     "SettingsPanel.dc.html",
+    "BarFolded.dc.html",
+    "BarPeek.dc.html",
     "KeyboardLandscape.dc.html",
     "MenusPulldown.dc.html",
     "PairingOverlay.dc.html",

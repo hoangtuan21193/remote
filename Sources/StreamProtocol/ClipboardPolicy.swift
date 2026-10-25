@@ -347,9 +347,10 @@ public enum ClipboardPolicy {
     /// Where the chip goes on the stream panel: under the bar at its top trailing corner sideways, and
     /// at its bottom corner while the link's line holds the top; held upright, at the picture's bottom
     /// trailing corner, just above the window bar or row 1 (the bar is under the picture there).
+    /// Sideways with the bar folded, its button holds the top trailing corner: the bottom corner too.
     public enum Corner: Equatable, Sendable { case topTrailing, bottomTrailing }
-    public static func chipCorner(landscape: Bool, linkLineShown: Bool) -> Corner {
-        landscape && !linkLineShown ? .topTrailing : .bottomTrailing
+    public static func chipCorner(landscape: Bool, linkLineShown: Bool, barFolded: Bool = false) -> Corner {
+        landscape && !linkLineShown && !barFolded ? .topTrailing : .bottomTrailing
     }
 
     // MARK: Words

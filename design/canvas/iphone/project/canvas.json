@@ -101,6 +101,20 @@
       "h": 402,
       "title": "Aa — text size ruler"
     },
+    "BarFolded.dc.html": {
+      "x": 2862,
+      "y": 2548,
+      "w": 874,
+      "h": 402,
+      "title": "Stream — bar hidden"
+    },
+    "BarPeek.dc.html": {
+      "x": 3816,
+      "y": 2548,
+      "w": 874,
+      "h": 402,
+      "title": "Stream — hidden bar brought down"
+    },
     "KeyboardUpright.dc.html": {
       "x": 2410,
       "y": 1274,
@@ -131,6 +145,8 @@
     "StreamSideways.dc.html",
     "WindowLights.dc.html",
     "TextSize.dc.html",
+    "BarFolded.dc.html",
+    "BarPeek.dc.html",
     "KeyboardSideways.dc.html"
   ],
   "notes": {

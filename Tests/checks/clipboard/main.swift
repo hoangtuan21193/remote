@@ -328,6 +328,7 @@ check(C.notSent(mac: "Mac mini") == "Didn’t reach Mac mini. Try Paste again.",
 
 check(P.chipCorner(landscape: true, linkLineShown: false) == .topTrailing, "sideways: under the bar")
 check(P.chipCorner(landscape: true, linkLineShown: true) == .bottomTrailing, "sideways with the link's line at the top: the bottom corner")
+check(P.chipCorner(landscape: true, linkLineShown: false, barFolded: true) == .bottomTrailing, "sideways with the bar folded: its button holds the top corner")
 check(P.chipCorner(landscape: false, linkLineShown: false) == .bottomTrailing && P.chipCorner(landscape: false, linkLineShown: true) == .bottomTrailing,
       "upright: above the window bar or row 1")
 

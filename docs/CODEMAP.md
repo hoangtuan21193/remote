@@ -948,7 +948,9 @@ another; the first guesses, `1000x710` / `710x1000` / `500x710` / `710x500`,
 have none), `-SillHinge
 closed|half|flat` (the hinge and a 40 pt fold across the middle of the longer
 side; without it the harness knows no hinge, even on the Duo's simulator),
-`-SillLive 1` (real client inside the frame), `-SillDrawer 1`,
+`-SillLive 1` (real client inside the frame), `-SillDrawer 1`, `-SillBarHidden YES` (the
+landscape bar stashed in a tab on the trailing edge, as a PiP window; NO unfolds; read through @AppStorage, so it wins over a tap
+for that launch),
 `-SillActive none|desktop|<windowID>` (mock), `-SillHUD 1` (diagnostics overlay),
 `-SillSettings 1` (the Settings panel open), `-SillMacMenu
 code|blender|long|stale|noaccess|none|slow|timeout|refuse` (the mock Mac's
