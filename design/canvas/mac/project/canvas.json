@@ -1,7 +1,7 @@
 {
   "v": 3,
   "createdOnFiles": {"v": 1, "at": "2026-10-25T10:30:00Z"},
-  "title": "Sill — Mac",
+  "title": "Rimoto — Mac",
   "launch": {"view": "canvas"},
   "pages": [],
   "boards": {
@@ -14,7 +14,7 @@
     "SettingsVirtualDisplay.dc.html": {"x": 1800, "y": 1000, "w": 520, "h": 760, "title": "Settings — Virtual Display"},
     "SettingsPermissions.dc.html": {"x": 2400, "y": 1000, "w": 520, "h": 760, "title": "Settings — Permissions"},
     "SettingsRemoteAccess.dc.html": {"x": 3000, "y": 1000, "w": 520, "h": 760, "title": "Settings — Remote Access"},
-    "LogWindow.dc.html": {"x": 0, "y": 2160, "w": 900, "h": 520, "title": "Sill Log"}
+    "LogWindow.dc.html": {"x": 0, "y": 2160, "w": 900, "h": 520, "title": "Rimoto Log"}
   },
   "order": [
     "Main.dc.html", "PairWindow.dc.html", "CableNotice.dc.html",

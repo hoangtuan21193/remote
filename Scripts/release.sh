@@ -264,7 +264,7 @@ feed_warning() {
 check_signature() {
     local app="$1" details entitlements arch archs
     codesign --verify --strict --deep "$app" || fail "codesign can't verify $app"
-    archs="$(lipo -archs "$app/Contents/MacOS/Sill")" || fail "lipo can't read $app/Contents/MacOS/Sill"
+    archs="$(lipo -archs "$app/Contents/MacOS/Rimoto")" || fail "lipo can't read $app/Contents/MacOS/Rimoto"
     for arch in $archs; do
         details="$(codesign -dvvv --architecture "$arch" "$app" 2>&1)"
         grep -q '^Authority=Developer ID Application: ' <<<"$details" || fail "$app ($arch) is not signed with Developer ID"
@@ -373,8 +373,8 @@ check_disk_image() {
     dmg_device="$(printf '%s\n' "$output" | awk -F'\t' '$1 ~ /^\/dev\/disk/ { sub(/[ \t]+$/, "", $1); print $1; exit }')"
     line="$(printf '%s\n' "$output" | awk -F'\t' '$2 ~ /Apple_HFS/ { print; exit }')"
     mounted="$(printf '%s' "$line" | awk -F'\t' '{ print $NF }')"
-    [ -n "$dmg_device" ] && [ -n "$line" ] && [ -d "$mounted/Sill.app" ] || { printf '%s\n' "$output" >&2; fail "$dmg mounted no Sill.app"; }
-    check_gatekeeper "$mounted/Sill.app"
+    [ -n "$dmg_device" ] && [ -n "$line" ] && [ -d "$mounted/Rimoto.app" ] || { printf '%s\n' "$output" >&2; fail "$dmg mounted no Rimoto.app"; }
+    check_gatekeeper "$mounted/Rimoto.app"
     hdiutil detach "$dmg_device" -quiet || hdiutil detach "$dmg_device" -force -quiet
     dmg_device=""
     rmdir "$dmg_mounts" 2>/dev/null || true
@@ -432,14 +432,14 @@ main() {
         echo "warning: the working tree has uncommitted changes. Release from a commit: the build number is the commit count, so a build of that commit without these changes has the same number." >&2
     fi
 
-    say "Building and signing Sill.app (Scripts/make-app.sh --release)"
+    say "Building and signing Rimoto.app (Scripts/make-app.sh --release)"
     if [ "$dry_run" = 1 ]; then
         SILL_RELEASE_DRY_RUN=1 Scripts/make-app.sh --release
     else
         Scripts/make-app.sh --release
     fi
 
-    local app=.build/Sill.app version build zip dmg
+    local app=.build/Rimoto.app version build zip dmg
     # Read as make-app.sh's last line reads it: the version from Packaging/Info.plist, and the
     # build number (the commit count) it stamped into the bundle.
     version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")"
@@ -451,7 +451,7 @@ main() {
     # them, such as a CI runner, would still build); a release must not ship the generic icon.
     [ -f "$app/Contents/Resources/Assets.car" ] && [ -f "$app/Contents/Resources/AppIcon.icns" ] \
         || fail "$app has no icon (Assets.car and AppIcon.icns): make-app.sh's warning above says why"
-    say "Sill $version ($build) for $(lipo -archs "$app/Contents/MacOS/Sill"). The site says Apple silicon: change that if this ever lists x86_64."
+    say "Sill $version ($build) for $(lipo -archs "$app/Contents/MacOS/Rimoto"). The site says Apple silicon: change that if this ever lists x86_64."
     # The disk image is made only after the app's notarization; its tool and background now, so a
     # problem with either stops the run before anything goes to Apple.
     Scripts/make-dmg.sh --prepare
@@ -497,14 +497,14 @@ DRY
     unpacked="$(mktemp -d "${TMPDIR:-/tmp}/sill-release.XXXXXX")"
     ditto -x -k "$zip" "$unpacked"
     check_gatekeeper "$app"
-    check_gatekeeper "$unpacked/Sill.app"
+    check_gatekeeper "$unpacked/Rimoto.app"
 
     say "Making the disk image $dmg with the stapled app (Scripts/make-dmg.sh)"
     Scripts/make-dmg.sh --sign "$SILL_SIGN_IDENTITY" "$app" "$dmg"
     notarize "$dmg" ".build/Sill-$version-dmg-notary.plist" ".build/Sill-$version-dmg-notary-log.json"
     say "Stapling the ticket to $dmg"
     xcrun stapler staple "$dmg"
-    say "Checking $dmg, and the Sill.app inside it"
+    say "Checking $dmg, and the Rimoto.app inside it"
     check_disk_image "$dmg"
 
     local sha dmg_sha

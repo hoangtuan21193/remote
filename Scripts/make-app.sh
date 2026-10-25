@@ -1,9 +1,11 @@
 #!/bin/bash
-# Builds Sill.app, the menu bar Mac host, from this SwiftPM package.
+# Builds Rimoto.app (upstream's Sill.app, renamed in this fork), the menu bar Mac host, from this
+# SwiftPM package.
 #
-#   Scripts/make-app.sh                    .build/Sill.app, signed with your Apple Development identity
+#   Scripts/make-app.sh                    .build/Rimoto.app, signed with your Apple Development identity
 #   SILL_UNIVERSAL=1 Scripts/make-app.sh   …for Apple silicon and Intel Macs (arm64 and x86_64; #62)
-#   Scripts/make-app.sh --install          …then replace /Applications/Sill.app (a running copy quits first)
+#   Scripts/make-app.sh --install          …then replace /Applications/Rimoto.app (a running copy quits first;
+#                                          upstream's /Applications/Sill.app is never touched)
 #   Scripts/make-app.sh --install --open   …and launch it: Noah's one command after any change
 #   SILL_SIGN_IDENTITY='Developer ID Application: … (9B2KKVM937)' Scripts/make-app.sh --release
 #                                          (M6; refused unless HEAD carries the tag v‹version› and
@@ -16,6 +18,10 @@
 # are granted to the CFBundleIdentifier plus the code's designated requirement. So: swift build,
 # wrap the SillMenuBar executable with Packaging/Info.plist and an icon compiled from
 # design/AppIcon.svg, sign the whole bundle last, verify.
+#
+# The bundle ID, the executable's name and the name people see all come from Packaging/Info.plist
+# (com.hoangtuan.rimoto.mac, Rimoto): this fork's own, so Rimoto.app installs beside upstream's
+# Sill.app (me.saffer.sill.mac) instead of replacing it. Changed in this fork.
 #
 # Grants survive rebuilds only with a real identity: its designated requirement names the bundle ID
 # and the certificate, not this binary. Ad hoc ("-") is a hash of this exact build, so every
@@ -32,6 +38,10 @@ for arg in "$@"; do
         *) echo "usage: $0 [--install] [--open] [--release]" >&2; exit 2 ;;
     esac
 done
+# 9B2KKVM937 here and in the --release path below is upstream's team (Noah's Developer ID), and
+# Packaging/SillRelease.entitlements names upstream's bundle ID me.saffer.sill.mac: left as upstream
+# has them. A --release build of Rimoto needs this fork's own team, entitlements
+# (‹team›.com.hoangtuan.rimoto.mac) and profile first; the profile check below refuses a mismatch.
 # --release is for notarization, which accepts only a Developer ID Application signature and says
 # so only after the upload. The default identity is Apple Development, so without
 # SILL_SIGN_IDENTITY stop now, before building; the signature itself is checked after signing.
@@ -58,8 +68,10 @@ if [ "$release" = 1 ]; then
 fi
 
 bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Packaging/Info.plist)"
+executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' Packaging/Info.plist)"   # Rimoto
+app_name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' Packaging/Info.plist)"           # Rimoto
 
-# SILL_UNIVERSAL=1: one Sill.app for Apple silicon and Intel Macs (#62), one build per architecture
+# SILL_UNIVERSAL=1: one Rimoto.app for Apple silicon and Intel Macs (#62), one build per architecture
 # joined with lipo. Not one `swift build --arch arm64 --arch x86_64`: that needs Xcode's XCBuild, and
 # the Command Line Tools alone must still build this. Each architecture has its own scratch path: in
 # one shared .build, every switch of triple costs a relink (16 s measured), so no rebuild stays at
@@ -78,8 +90,8 @@ else
     swift build -c release --product SillMenuBar
     bin="$(swift build -c release --product SillMenuBar --show-bin-path)"
 fi
-app=.build/Sill.app
-stage=.build/Sill.app.partial      # assembled aside, so a failed run never leaves half a bundle
+app=".build/$app_name.app"
+stage=".build/$app_name.app.partial"      # assembled aside, so a failed run never leaves half a bundle
 rm -rf "$stage"
 mkdir -p "$stage/Contents/MacOS" "$stage/Contents/Resources"
 # The executable, with the SDK it was compiled against recorded in it. SwiftPM links without
@@ -89,7 +101,7 @@ mkdir -p "$stage/Contents/MacOS" "$stage/Contents/Resources"
 # minos from the binary, sdk from the SDK in use. The signature this breaks is replaced below.
 minos="$(xcrun vtool -show-build "$bin/SillMenuBar" | awk '$1 == "minos" && !found { print $2; found = 1 }')"
 xcrun vtool -set-build-version macos "${minos:?vtool reported no deployment target for $bin/SillMenuBar}" \
-    "$(xcrun --sdk macosx --show-sdk-version)" -output "$stage/Contents/MacOS/Sill" "$bin/SillMenuBar"
+    "$(xcrun --sdk macosx --show-sdk-version)" -output "$stage/Contents/MacOS/$executable" "$bin/SillMenuBar"
 cp Packaging/Info.plist "$stage/Contents/Info.plist"
 build_number="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" "$stage/Contents/Info.plist"
@@ -125,9 +137,9 @@ JSON
     if [ -f "$doc/icon.json" ] && { [ "$doc" = "$PWD/Packaging/AppIcon.icon" ] || [ -f "$doc/Assets/Sill.png" ]; }; then
         xcrun actool --compile "$icon_out/compiled" --platform macosx --minimum-deployment-target 14.0 \
             --app-icon AppIcon --output-partial-info-plist "$icon_out/partial.plist" "$doc" >/dev/null \
-            || echo "warning: actool could not compile the icon; Sill.app gets the generic icon" >&2
+            || echo "warning: actool could not compile the icon; $app_name.app gets the generic icon" >&2
     else
-        echo "warning: Quick Look did not render design/AppIcon.svg; Sill.app gets the generic icon" >&2
+        echo "warning: Quick Look did not render design/AppIcon.svg; $app_name.app gets the generic icon" >&2
     fi
 fi
 cp "$icon_out"/compiled/* "$stage/Contents/Resources/" 2>/dev/null || true
@@ -149,7 +161,7 @@ if [ "$release" = 1 ]; then
     #
     # The identity items' keychain (docs/keychain-plan.md): with a Developer ID provisioning profile
     # that authorises the access group, embed it and sign with Packaging/SillRelease.entitlements, so
-    # Sill.app keeps its key and trust list in the data-protection keychain, which no other process
+    # the app keeps its key and trust list in the data-protection keychain, which no other process
     # can pre-create or read. Without the profile, sign without those entitlements: they are
     # profile-restricted, so a build that carried them without a matching profile would pass codesign
     # yet be killed by AMFI at launch. The profile-free build is a valid, notarizable Developer ID
@@ -313,10 +325,11 @@ echo "Built $app, version $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVers
 echo "  identity keychain: ${keychain_note:-login keychain}"
 codesign -d -r- "$app" 2>&1 | sed -n 's/^# *designated => /  designated requirement: /p; s/^designated => /  designated requirement: /p'
 
-dest="${SILL_INSTALL_DIR:-/Applications}/Sill.app"
+dest="${SILL_INSTALL_DIR:-/Applications}/$app_name.app"
 if [ "$install" = 1 ]; then
-    # An iPad build of the iOS client installed on this Mac would also be a Sill.app: never replace
-    # anything that is not this app.
+    # An iPad build of the iOS client installed on this Mac would also be a Rimoto.app: never replace
+    # anything that is not this app (the bundle ID from Packaging/Info.plist). Upstream's Sill.app
+    # has another name and bundle ID, and is never touched.
     if [ -e "$dest" ]; then
         existing="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$dest/Contents/Info.plist" 2>/dev/null || true)"
         if [ "$existing" != "$bundle_id" ]; then
@@ -324,16 +337,18 @@ if [ "$install" = 1 ]; then
             exit 1
         fi
     fi
-    # Quit a running Sill.app first. SIGTERM goes through HostShutdown, which puts a staged window
-    # back. The pattern matches Mac bundles only: the iOS Simulator's Sill.app is flat, and
-    # `pkill -x Sill` would kill it too.
-    if pgrep -f 'Sill\.app/Contents/MacOS/Sill' >/dev/null; then
-        pkill -TERM -f 'Sill\.app/Contents/MacOS/Sill' || true
-        for _ in $(seq 1 50); do pgrep -f 'Sill\.app/Contents/MacOS/Sill' >/dev/null || break; sleep 0.1; done
+    # Quit a running Rimoto.app first. SIGTERM goes through HostShutdown, which puts a staged window
+    # back. The pattern matches Mac bundles only: the iOS Simulator's Rimoto.app is flat, and
+    # `pkill -x Rimoto` would kill it too. Upstream's Sill.app (Sill.app/Contents/MacOS/Sill) keeps
+    # running.
+    running="$app_name\\.app/Contents/MacOS/$executable"
+    if pgrep -f "$running" >/dev/null; then
+        pkill -TERM -f "$running" || true
+        for _ in $(seq 1 50); do pgrep -f "$running" >/dev/null || break; sleep 0.1; done
     fi
     rm -rf "$dest"
     ditto "$app" "$dest"
-    # One registered Sill: LaunchServices (the login item, `open -b`, Spotlight) must not pick the
+    # One registered Rimoto: LaunchServices (the login item, `open -b`, Spotlight) must not pick the
     # copy in .build.
     /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$PWD/$app" 2>/dev/null || true
     echo "Installed $dest"

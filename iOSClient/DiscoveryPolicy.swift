@@ -752,7 +752,7 @@ enum DiscoveryPolicy {
     static func reconnectLine(mac: String, failed: Int, direct: Bool) -> String {
         if failed >= reconnectDials { return "Stopped trying to reach \(mac). Tap it to try again." }
         if failed >= reconnectQuietAfter {
-            return "\(mac) isn\u{2019}t answering. It may be asleep. Sill keeps trying, or tap it to try now."
+            return "\(mac) isn\u{2019}t answering. It may be asleep. Rimoto keeps trying, or tap it to try now."
         }
         return direct ? "Reconnecting to \(mac) directly\u{2026}" : "Reconnecting to \(mac)\u{2026}"
     }
@@ -927,7 +927,7 @@ enum DiscoveryPolicy {
             case .method(let m): return m?.word
             case .notPaired, .openDoor: return "Not paired"
             case .pairsOverCable: return Method.wired.word
-            case .updateSill: return "Update Sill"
+            case .updateSill: return "Update Rimoto"
             }
         }
 
@@ -945,7 +945,7 @@ enum DiscoveryPolicy {
             case .notPaired: return "Pairs with a code \(name) shows, then connects."
             case .openDoor: return "Connects without pairing: \(name) lets any device in."
             case .pairsOverCable: return "Pairs over the USB cable, then connects."
-            case .updateSill: return "\(name)\u{2019}s Sill is too old for this \(device)."
+            case .updateSill: return "\(name)\u{2019}s Rimoto is too old for this \(device)."
             }
         }
     }
@@ -1029,7 +1029,7 @@ enum DiscoveryPolicy {
 
     /// The status line after a tap that dialed nothing because the Mac's Sill is too old.
     static func updateSillStatus(mac: String) -> String {
-        "\(mac) runs an older Sill. Update Sill on the Mac to connect."
+        "\(mac) runs an older Rimoto. Update Rimoto on the Mac to connect."
     }
 
     /// Whether this device's connection runs over the USB cable to the Mac, as this device sees it
@@ -1426,13 +1426,13 @@ enum DiscoveryPolicy {
         static func overlayAsking(mac: String) -> String { "Asking \(mac) for a code\u{2026}" }
         static func overlayShowing(mac: String) -> String { "\(mac) is showing a code now." }
         static func overlayOpenOnMac(mac: String) -> String {
-            "\(mac) didn\u{2019}t show a code by itself. On the Mac, choose Pair iPhone or iPad\u{2026} in the Sill menu."
+            "\(mac) didn\u{2019}t show a code by itself. On the Mac, choose Pair iPhone or iPad\u{2026} in the Rimoto menu."
         }
         static func overlayLocked(mac: String, device: String) -> String {
             "Unlock \(mac), then choose Pair This \(device)\u{2026} again."
         }
         static func openOnMac(mac: String) -> String {
-            "\(mac) didn\u{2019}t show a code. On the Mac, choose Pair iPhone or iPad\u{2026} in the Sill menu, then tap \(mac) again."
+            "\(mac) didn\u{2019}t show a code. On the Mac, choose Pair iPhone or iPad\u{2026} in the Rimoto menu, then tap \(mac) again."
         }
         static func locked(mac: String) -> String { "Unlock \(mac), then tap it again." }
         static func removed(mac: String, device: String) -> String { "\(mac) removed this \(device). Tap it to pair again." }
@@ -1447,16 +1447,16 @@ enum DiscoveryPolicy {
         /// or a closed code the Mac keeps this device quiet (a cancel on the Mac, a stop), so the
         /// words send the person to its menu first; after an expiry a tap is enough.
         static func stopped(mac: String) -> String {
-            "\(mac) stopped pairing after too many wrong codes. On the Mac, choose Pair iPhone or iPad\u{2026} in the Sill menu, then tap \(mac) again."
+            "\(mac) stopped pairing after too many wrong codes. On the Mac, choose Pair iPhone or iPad\u{2026} in the Rimoto menu, then tap \(mac) again."
         }
         static func expired(mac: String) -> String { "That code expired. Tap \(mac) for a new one." }
         static func closed(mac: String) -> String {
-            "That code no longer works. On the Mac, choose Pair iPhone or iPad\u{2026} in the Sill menu, then tap \(mac) again."
+            "That code no longer works. On the Mac, choose Pair iPhone or iPad\u{2026} in the Rimoto menu, then tap \(mac) again."
         }
         static func proofFailed(mac: String) -> String {
             "Pairing didn\u{2019}t finish: \(mac) couldn\u{2019}t show it knows the code. Tap it to try again."
         }
         /// Nothing answered the ask or a proof at the row (it went, or Sill quit meanwhile).
-        static func noAnswer(mac: String) -> String { "\(mac) didn\u{2019}t answer. Check that Sill is open on it, then tap it again." }
+        static func noAnswer(mac: String) -> String { "\(mac) didn\u{2019}t answer. Check that Rimoto is open on it, then tap it again." }
     }
 }

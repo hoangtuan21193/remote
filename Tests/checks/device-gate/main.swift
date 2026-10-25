@@ -38,12 +38,12 @@ check(DeviceGate.deviceWord(h("1.0", "sillclient iPhone")) == "device", "iPhone 
 check(DeviceGate.deviceWord(h("1.0", "\u{202E}iPad")) == "iPad", "a bidi override is cleaned first")
 check(DeviceGate.deviceWord(h("1.0", nil)) == "device" && DeviceGate.deviceWord(nil) == "device", "no name")
 let ipadRefusal = DeviceGate.refusal(h("1.1", "iPad (iPad14,1)"), floor: f12, macName: "Mac mini")
-check(ipadRefusal == Goodbye(reason: "update", message: "Update Sill on your iPad to keep using Mac mini. It needs version 1.2 or later.",
+check(ipadRefusal == Goodbye(reason: "update", message: "Update Rimoto on your iPad to keep using Mac mini. It needs version 1.2 or later.",
                              minimumVersion: "1.2", reconnect: false), "the iPad's refusal: \(ipadRefusal)")
 check(DeviceGate.message(h("1.1", "iPhone (iPhone17,1)"), floor: SillVersion("2")!, macName: "Noah’s MacBook Pro")
-      == "Update Sill on your iPhone to keep using Noah’s MacBook Pro. It needs version 2.0 or later.", "an iPhone's message, floor 2 shows 2.0")
+      == "Update Rimoto on your iPhone to keep using Noah’s MacBook Pro. It needs version 2.0 or later.", "an iPhone's message, floor 2 shows 2.0")
 check(DeviceGate.message(nil, floor: SillVersion("99")!, macName: "Mac")
-      == "Update Sill on your device to keep using Mac. It needs version 99.0 or later.", "no hello: 'your device'")
+      == "Update Rimoto on your device to keep using Mac. It needs version 99.0 or later.", "no hello: 'your device'")
 check(DeviceGate.refusal(nil, floor: SillVersion("1.2.0")!, macName: "M").minimumVersion == "1.2", "minimumVersion as SillVersion shows it")
 check(DeviceGate.message(h("1", "iPad"), floor: f12, macName: "Mac mini").count <= 200, "at most 200 characters (§4.6)")
 

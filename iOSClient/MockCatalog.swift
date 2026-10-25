@@ -218,7 +218,7 @@ enum MockCatalog {
                             fetchDelay: 0.2, refusesChoices: false)
         case .noaccess:
             return MacMenus(topLevel: MacMenu(version: 3, app: "Code", bundleID: vscode, menus: [],
-                                              note: "Allow Accessibility for Sill on the Mac (System Settings › Privacy & Security › Accessibility)."),
+                                              note: "Allow Accessibility for Rimoto on the Mac (System Settings › Privacy & Security › Accessibility)."),
                             tree: [:], fetchDelay: 0.2, refusesChoices: false)
         case .none:
             return MacMenus(topLevel: MacMenu(version: 3, menus: []), tree: [:], fetchDelay: 0.2, refusesChoices: false)
@@ -602,7 +602,7 @@ enum MockCatalog {
             // the notice beside them. The message is the host's (DeviceGate's), for this device.
             client.macs = [mac("Mac mini", .wifi)]
             let goodbye = c == .update
-                ? Goodbye(reason: Goodbye.update, message: "Update Sill on your \(StreamClient.deviceWord) to keep using Mac mini. It needs version 1.2 or later.",
+                ? Goodbye(reason: Goodbye.update, message: "Update Rimoto on your \(StreamClient.deviceWord) to keep using Mac mini. It needs version 1.2 or later.",
                           minimumVersion: "1.2", reconnect: false)
                 // A reason this build does not know ("pairingRequired" is pairing at home's own now).
                 : Goodbye(reason: "pairAgain",

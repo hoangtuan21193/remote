@@ -117,9 +117,9 @@ enum MenuBuilder {
             menu.append(MenuEntry(kind: .item, title: "Remote Access…", subtitle: note, action: .showSettingsTab(.remoteAccess)))
         }
         var loginNote: String?
-        if !login.available { loginNote = "Available when Sill runs from its app bundle" }
+        if !login.available { loginNote = "Available when Rimoto runs from its app bundle" }
         else if let error = login.error { loginNote = error }
-        else if login.needsApproval { loginNote = "Approve Sill in System Settings › Login Items" }
+        else if login.needsApproval { loginNote = "Approve Rimoto in System Settings › Login Items" }
         menu.append(MenuEntry(kind: .item, title: "Launch at Login", subtitle: loginNote, checked: login.on,
                               enabled: login.available, action: .toggleLaunchAtLogin))
         menu.append(MenuEntry(kind: .item, title: "Permissions", children: [
@@ -140,7 +140,7 @@ enum MenuBuilder {
         menu.append(MenuEntry(kind: .item, title: "Show Log…", action: .showLog))
         menu.append(MenuEntry(kind: .item, title: "Settings…", key: ",", action: .showSettings))
         menu.append(.separator)
-        menu.append(MenuEntry(kind: .item, title: "Quit Sill", key: "q", action: .quit))
+        menu.append(MenuEntry(kind: .item, title: "Quit Rimoto", key: "q", action: .quit))
         return menu
     }
 

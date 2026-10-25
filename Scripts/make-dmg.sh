@@ -51,7 +51,7 @@
 # under $TMPDIR or /private/tmp), and the check below refuses any file it didn't put there.
 set -euo pipefail
 
-volume_name=Sill
+volume_name=Rimoto
 window=660x400          # design/DMGBackground.svg's size: the window's content, in points
 position=200,120        # the window's top-left corner on the screen
 icon_size=128
@@ -60,10 +60,10 @@ edge=ffffff             # the SVG's every edge: shown where the window is larger
 layout=(
     --window "$window" --position "$position" --icon-size "$icon_size" --text-size "$text_size"
     --background .background/background.tiff --background-color "$edge"
-    --item Sill.app=170,180 --item Applications=490,180
+    --item Rimoto.app=170,180 --item Applications=490,180
     --hidden .background --hidden .VolumeIcon.icns
 )
-expected_root=".DS_Store .VolumeIcon.icns .background Applications Sill.app"
+expected_root=".DS_Store .VolumeIcon.icns .background Applications Rimoto.app"
 
 say() { printf '==> %s\n' "$*"; }
 fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
@@ -224,7 +224,7 @@ main() {
         "$work/rw.dmg" >/dev/null || fail "hdiutil can't create a ${megs} MB HFS+ image"
     attach "$work/rw.dmg" rw
     local writable="$mounted" writable_device="$device"
-    ditto "$app" "$writable/Sill.app"
+    ditto "$app" "$writable/Rimoto.app"
     ln -s /Applications "$writable/Applications"
     mkdir "$writable/.background"
     cp .build/dmg/background.tiff "$writable/.background/background.tiff"
@@ -268,11 +268,11 @@ check_image() {
     [ -L "$mounted/Applications" ] && [ "$(readlink "$mounted/Applications")" = /Applications ] \
         || fail "the image's Applications is not a link to /Applications"
     "$tool" check "$mounted" "${layout[@]}"
-    codesign --verify --deep --strict "$mounted/Sill.app" 2>/dev/null || fail "the image's Sill.app doesn't pass codesign --verify --deep --strict"
-    diff -r "$app" "$mounted/Sill.app" >/dev/null || fail "the image's Sill.app differs from $app"
+    codesign --verify --deep --strict "$mounted/Rimoto.app" 2>/dev/null || fail "the image's Rimoto.app doesn't pass codesign --verify --deep --strict"
+    diff -r "$app" "$mounted/Rimoto.app" >/dev/null || fail "the image's Rimoto.app differs from $app"
     local volume
     volume="$(df -k "$mounted" | awk 'NR == 2 { printf "%.1f MB used of %.1f MB", $3 / 1024, $2 / 1024 }')"
-    echo "Sill.app is $app's, byte for byte, and passes codesign; the volume: $volume; the image's signature: ${signer:-ad hoc}."
+    echo "Rimoto.app is $app's, byte for byte, and passes codesign; the volume: $volume; the image's signature: ${signer:-ad hoc}."
     detach "$device" || fail "hdiutil can't detach $image"
 }
 
