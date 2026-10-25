@@ -276,6 +276,22 @@ struct TrackpadGestures {
     /// `generation` (`WindowList.gestures`; nil from a Mac before them, which gets none). While a
     /// window streams the Desktop is picked first, as its button does: none of the views a gesture
     /// opens is in a window's picture.
+    /// Where a decided gesture goes (2026-10-25, .planboard/strip-gestures D2, D4): three fingers
+    /// left or right step this device's app switcher (AppSwitcherPolicy), forward for left, and never
+    /// reach the Mac; four fingers left or right are the Mac's Spaces; any other four-finger gesture
+    /// does nothing; three fingers up, down, pinched or spread go to the Mac as before.
+    enum Route: Equatable {
+        case switcher(forward: Bool)
+        case mac
+        case nothing
+    }
+
+    static func route(_ gesture: Gesture, fingers: Int) -> Route {
+        let sideways = gesture == .swipeLeft || gesture == .swipeRight
+        if fingers >= 4 { return sideways ? .mac : .nothing }
+        return sideways ? .switcher(forward: gesture == .swipeLeft) : .mac
+    }
+
     static func sending(switchOn: Bool, connected: Bool, hostGestures: Int?, generation: Int,
                         windowStreams: Bool) -> (send: Bool, desktopFirst: Bool) {
         guard switchOn, connected, let takes = hostGestures, takes >= generation else { return (false, false) }

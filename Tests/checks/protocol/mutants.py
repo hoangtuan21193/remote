@@ -27,6 +27,8 @@ MUTANTS = [
     ("a host stops offering sill-pair/1", "RemoteTLS.swift", "public static let serverALPNs = [sessionALPN, pairingALPN]", "public static let serverALPNs = [sessionALPN]"),
     ("a later host offers sill/2 instead of sill/1", "RemoteTLS.swift", "public static let serverALPNs = [sessionALPN, pairingALPN]", 'public static let serverALPNs = ["sill/2", pairingALPN]'),
     ("the clipboard numbered 30", "StreamMessage.swift", "case clipboard = 32", "case clipboard = 30"),
+    ("a viewport's desktop dropped", "Viewport.swift", "        self.desktop = desktop\n", "        self.desktop = nil\n"),
+    ("the window list's desktopScale always 1", "Switcher.swift", "        self.desktopScale = desktopScale\n", "        self.desktopScale = desktopScale ?? 1\n"),
     ("the server offers sill/1 alone, whatever serverALPNs says", "RemoteTLS.swift",
      "for alpn in serverALPNs { sec_protocol_options_add_tls_application_protocol(sp, alpn) }", "sec_protocol_options_add_tls_application_protocol(sp, sessionALPN)"),
 ]

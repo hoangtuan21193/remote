@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Book pose — app switcher (three-finger swipe)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#9BB7FF}a:hover{color:#C3D3FF}
+</style>
+</helmet>
+<div style="width: 951px; height: 669px; position: relative; overflow: hidden; background: #000000; color: #EEF0F3; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif">
+
+  <div role="menubar" aria-label="Pages menus, the Mac's menu bar" style="position: absolute; left: 0; top: 0; width: 951px; height: 40px; background: #16181C; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06); font: 500 14px -apple-system, system-ui, sans-serif">
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 8px; top: 11px; width: 61px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 700 14px -apple-system, system-ui, sans-serif">Pages</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 69px; top: 11px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">File</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 119px; top: 11px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Edit</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 169px; top: 11px; width: 66px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Insert</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 235px; top: 11px; width: 66px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Format</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 301px; top: 11px; width: 73px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Arrange</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 374px; top: 11px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">View</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 495px; top: 11px; width: 58px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Share</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 553px; top: 11px; width: 66px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Window</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 619px; top: 11px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Help</button>
+  </div>
+  <button aria-label="Open the app list" style="position: absolute; left: 751px; top: 8px; width: 44px; height: 32px; border: 0; padding: 0; background: transparent; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5L21 21"></path></svg></span></button>
+  <button aria-label="Show the keyboard" style="position: absolute; left: 795px; top: 8px; width: 44px; height: 32px; border: 0; padding: 0; background: transparent; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"></path></svg></span></button>
+  <button aria-label="Text size" style="position: absolute; left: 839px; top: 8px; width: 60px; height: 32px; border: 0; padding: 0; background: transparent; display: flex; align-items: center; justify-content: center"><span style="width: 56px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: baseline; justify-content: center; gap: 3px; line-height: 26px"><span style="font: 600 14px -apple-system, system-ui, sans-serif; color: #EEF0F3">Aa</span><span style="font: 500 11px -apple-system, system-ui, sans-serif; color: #C4C9D1">1×</span></span></button>
+  <button aria-label="Settings for Mac Studio" style="position: absolute; left: 899px; top: 8px; width: 44px; height: 32px; border: 0; padding: 0; background: transparent; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg></span></button>
+
+  <div style="position: absolute; left: 8px; top: 48px; width: 935px; height: 613px; border-radius: 12px; background: #1F2126; border: 1px solid rgba(255,255,255,0.09); box-sizing: border-box; overflow: hidden; display: flex; justify-content: center" role="img" aria-label="The Mac's Pages document, streaming across both pages">
+    <div style="width: 907px; height: 613px; background: #F4F4F4; display: flex; gap: 40px; padding: 34px; box-sizing: border-box">
+      <div style="flex: 1; background: #FFFFFF; padding: 26px; display: flex; flex-direction: column; gap: 9px"><b style="font-size: 18px; color: #222">Quarterly report</b><span style="height: 7px; background: #E3E3E3"></span><span style="height: 7px; width: 90%; background: #E3E3E3"></span><span style="height: 7px; width: 95%; background: #E3E3E3"></span><span style="height: 160px; background: #D7DEE8"></span></div>
+      <div style="flex: 1; background: #FFFFFF; padding: 26px; display: flex; flex-direction: column; gap: 9px"><span style="height: 7px; background: #E3E3E3"></span><span style="height: 7px; width: 85%; background: #E3E3E3"></span><span style="height: 7px; width: 92%; background: #E3E3E3"></span><span style="height: 7px; width: 70%; background: #E3E3E3"></span></div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 455px; top: 0; width: 40px; height: 669px; background: rgba(255,255,255,0.04); border-left: 1px dashed rgba(255,255,255,0.18); border-right: 1px dashed rgba(255,255,255,0.18)" aria-hidden="true"></div>
+
+  <div style="position: absolute; left: 8px; top: 48px; width: 935px; height: 613px; border-radius: 12px; background: rgba(0,0,0,0.18)" aria-hidden="true"></div>
+  <div role="listbox" aria-label="Apps on Mac Studio" style="position: absolute; left: 220px; top: 290px; display: flex; gap: 6px; padding: 12px; border-radius: 24px; background: rgba(22,24,28,0.92); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 6px 20px rgba(0,0,0,0.45)">
+    <div role="option" aria-label="Desktop" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #3A3D44; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M9 20h6M12 16v4"></path></svg></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Desktop</span></div>
+    <div role="option" aria-label="Pages, on screen" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #E8772E; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">Pa</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Pages</span></div>
+    <div role="option" aria-label="Safari" aria-selected="true" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid #9BB7FF; border-radius: 16px; background: #2C3550; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #4B55C8; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">Sa</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #EEF0F3">Safari</span></div>
+    <div role="option" aria-label="Notes" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #8A6A12; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">No</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Notes</span></div>
+    <div role="option" aria-label="Finder" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #2F63C8; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">Fi</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Finder</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":951,"height":669}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

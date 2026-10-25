@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stream — app switcher (three-finger swipe)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#9BB7FF}a:hover{color:#C3D3FF}
+</style>
+</helmet>
+<div style="width: 1133px; height: 744px; position: relative; overflow: hidden; background: #000000; color: #EEF0F3; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif">
+
+  <div style="position: absolute; left: 0; top: 0; width: 1133px; height: 24px; background: #16181C" aria-hidden="true"></div>
+  <div role="menubar" aria-label="Xcode menus" style="position: absolute; left: 0; top: 24px; width: 1133px; height: 32px; box-sizing: border-box; padding-left: 8px; background: #16181C; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; font-size: 14px; font-weight: 500; color: #EEF0F3"><div style="width: 925px; height: 31px; display: flex; align-items: center; overflow: hidden"><span role="menuitem" style="padding: 0 10px; font-weight: 700">Xcode</span><span role="menuitem" style="padding: 0 10px">File</span><span role="menuitem" style="padding: 0 10px">Edit</span><span role="menuitem" style="padding: 0 10px">View</span><span role="menuitem" style="padding: 0 10px">Find</span><span role="menuitem" style="padding: 0 10px">Navigate</span><span role="menuitem" style="padding: 0 10px">Editor</span><span role="menuitem" style="padding: 0 10px">Product</span><span role="menuitem" style="padding: 0 10px">Debug</span><span role="menuitem" style="padding: 0 10px">Integrate</span><span role="menuitem" style="padding: 0 10px">Window</span><span role="menuitem" style="padding: 0 10px">Help</span></div></div>
+  <button aria-label="Open the app list" style="position: absolute; left: 933px; top: 24px; width: 44px; height: 32px; border: 0; padding: 0; background: transparent; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5L21 21"></path></svg></span></button>
+  <button aria-label="Show the keyboard" style="position: absolute; left: 977px; top: 24px; width: 44px; height: 32px; border: 0; padding: 0; background: transparent; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"></path></svg></span></button>
+  <button aria-label="Text size" style="position: absolute; left: 1021px; top: 24px; width: 60px; height: 32px; border: 0; padding: 0; background: transparent; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><span style="width: 56px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: center; justify-content: center"><span style="display: flex; align-items: baseline; gap: 3px; line-height: 26px"><span style="font: 600 14px -apple-system, system-ui, sans-serif; color: #EEF0F3">Aa</span><span style="font: 500 11px -apple-system, system-ui, sans-serif; color: #C4C9D1">1×</span></span></span></button>
+  <button aria-label="Settings for Mac Studio" style="position: absolute; left: 1081px; top: 24px; width: 44px; height: 32px; border: 0; padding: 0; background: transparent; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><span style="width: 40px; height: 26px; border-radius: 7px; background: #23262C; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg></span></button>
+
+  <div style="position: absolute; left: 8px; top: 64px; width: 1117px; height: 672px; border-radius: 12px; background: #1F2126; border: 1px solid rgba(255,255,255,0.09); box-sizing: border-box; overflow: hidden; display: flex; justify-content: center" role="img" aria-label="The Mac's Xcode window, streaming">
+    <div style="width: 1075px; height: 672px; background: #1E1E1E; display: flex; flex-direction: column">
+      <div style="height: 34px; background: #2B2B2B; display: flex; align-items: center; gap: 7px; padding: 0 12px">
+        <span style="width: 11px; height: 11px; border-radius: 6px; background: #FF5F57"></span><span style="width: 11px; height: 11px; border-radius: 6px; background: #FEBC2E"></span><span style="width: 11px; height: 11px; border-radius: 6px; background: #28C840"></span>
+        <span style="flex: 1; text-align: center; font-size: 12px; color: #BBBBBB">Rimoto — StreamClient.swift</span>
+      </div>
+      <div style="flex: 1; display: flex">
+        <div style="width: 220px; background: #252525; padding: 12px; display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: #BBBBBB"><span>▾ iOSClient</span><span style="padding-left: 14px">ContentView.swift</span><span style="padding-left: 14px; background: #3A5BA0; color: #FFF; border-radius: 4px">StreamClient.swift</span><span style="padding-left: 14px">StreamScreen.swift</span></div>
+        <div style="flex: 1; padding: 14px; font: 12px/19px ui-monospace, Menlo, monospace; color: #D4D4D4"><span style="color: #FC5FA3">final class</span> StreamClient {<br>&nbsp;&nbsp;<span style="color: #FC5FA3">func</span> connect() {<br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6C7986">// dial the Mac</span><br>&nbsp;&nbsp;}<br>}</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 8px; top: 64px; width: 1117px; height: 672px; border-radius: 12px; background: rgba(0,0,0,0.18)" aria-hidden="true"></div>
+  <div role="listbox" aria-label="Apps on Mac Studio" style="position: absolute; left: 311.5px; top: 335px; display: flex; gap: 6px; padding: 12px; border-radius: 24px; background: rgba(22,24,28,0.92); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 6px 20px rgba(0,0,0,0.45)">
+    <div role="option" aria-label="Desktop" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #3A3D44; color: #EEF0F3; display: flex; align-items: center; justify-content: center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M9 20h6M12 16v4"></path></svg></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Desktop</span></div>
+    <div role="option" aria-label="Xcode, on screen" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #2F7BE0; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">Xc</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Xcode</span></div>
+    <div role="option" aria-label="Safari" aria-selected="true" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid #9BB7FF; border-radius: 16px; background: #2C3550; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #4B55C8; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">Sa</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #EEF0F3">Safari</span></div>
+    <div role="option" aria-label="Notes" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #8A6A12; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">No</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Notes</span></div>
+    <div role="option" aria-label="Finder" aria-selected="false" style="flex: none; width: 92px; height: 104px; box-sizing: border-box; border: 2px solid transparent; border-radius: 16px; background: transparent; display: flex; flex-direction: column; align-items: center; padding-top: 8px"><span style="width: 64px; height: 64px; border-radius: 14px; background: #2F63C8; display: flex; align-items: center; justify-content: center"><span style="font: 700 22px -apple-system, system-ui, sans-serif; color: #FFFFFF">Fi</span></span><span style="margin-top: 6px; font: 500 12px/16px -apple-system, system-ui, sans-serif; color: #C4C9D1">Finder</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1133,"height":744}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

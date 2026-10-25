@@ -26,7 +26,7 @@ check(TourPolicy.steps(L, voiceOver: true) == [.bar, .settings], "landscape unde
 check(TourPolicy.steps(P, voiceOver: true) == [.bar, .settings, .laptop], "portrait under VoiceOver: no touch, laptop kept")
 check(TourPolicy.only(P) == [.laptop] && TourPolicy.only(L) == [], "only(): the laptop half is portrait's alone")
 check(TourPolicy.targets(.touch, L) == [.stream] && TourPolicy.targets(.touch, P) == [.stream], "touch lights the picture")
-check(TourPolicy.targets(.bar, L) == [.strip, .textSize, .keyboard], "landscape bar: the strip, Aa and Keyboard")
+check(TourPolicy.targets(.bar, L) == [.apps, .textSize, .keyboard], "landscape bar: the menu bar's Apps, Aa and Keyboard")
 check(TourPolicy.targets(.bar, P) == [.strip, .textSize], "portrait bar: the strip and Aa (the keyboard is a cap)")
 check(TourPolicy.targets(.settings, L) == [.settings] && TourPolicy.targets(.settings, P) == [.settings], "settings lights its button")
 check(TourPolicy.targets(.laptop, P) == [.keys, .trackpad], "laptop: the keys, then the trackpad")
@@ -310,31 +310,34 @@ func model(_ w: CGFloat, _ h: CGFloat) -> Screen {
             .keys: CGRect(x: padSide, y: keysY, width: w - 2 * padSide, height: keysH),
             .trackpad: CGRect(x: padSide, y: padY, width: w - 2 * padSide, height: h - padBottom - padY)])
     }
-    let compact = h < 560
-    let (barH, pad, bw, bh): (CGFloat, CGFloat, CGFloat, CGFloat) = compact ? (78, 14, 64, 58) : (86, 22, 66, 66)
-    let settingsX = w - pad - bw
-    let keyboardX = settingsX - 2 * (12 + bw)
-    let aaX = keyboardX - 12 - bw
-    let stripX = pad + bw + 12
-    let by = (barH - bh) / 2
-    let stream = CGRect(x: 8, y: barH + 8, width: w - 16, height: h - barH - 16)
+    // Sideways the Mac's menu bar is the one bar (.planboard/strip-gestures D1): 32 pt, 8 pt lower at
+    // the screen's edge; at its end Apps, Keyboard, Aa and Settings, each its whole height (44 pt
+    // wide, Aa 60), 8 pt in from the side.
+    let barY: CGFloat = 8, barH: CGFloat = 32
+    let settingsX = w - 8 - 44
+    let aaX = settingsX - 60
+    let keyboardX = aaX - 44
+    let appsX = keyboardX - 44
+    let stream = CGRect(x: 8, y: barY + barH + 8, width: w - 16, height: h - barY - barH - 16)
     return Screen(size: size, layout: L, stream: stream, targets: [
         .stream: stream,
-        .strip: CGRect(x: stripX, y: 5, width: aaX - 12 - stripX, height: barH - 9),
-        .textSize: CGRect(x: aaX, y: by, width: bw, height: bh),
-        .keyboard: CGRect(x: keyboardX, y: by, width: bw, height: bh),
-        .settings: CGRect(x: settingsX, y: by, width: bw, height: bh)])
+        .apps: CGRect(x: appsX, y: barY, width: 44, height: barH),
+        .textSize: CGRect(x: aaX, y: barY, width: 60, height: barH),
+        .keyboard: CGRect(x: keyboardX, y: barY, width: 44, height: barH),
+        .settings: CGRect(x: settingsX, y: barY, width: 44, height: barH)])
 }
 // The model against the plan's table (§6.3).
 let duoInner = model(1000, 710), duoOuter = model(710, 500), duoUp = model(710, 1000), duoOuterUp = model(500, 710)
 let seSide = model(667, 375), seUp = model(375, 667)
-check(duoInner.layout == L && duoInner.stream == CGRect(x: 8, y: 94, width: 984, height: 608) && duoInner.targets[.strip]!.width == 566, "1000×710 as the table")
-check(duoOuter.layout == L && duoOuter.stream == CGRect(x: 8, y: 86, width: 694, height: 406) && duoOuter.targets[.strip]!.width == 302, "710×500 as the table")
+// Sideways the menu bar is the one bar (.planboard/strip-gestures D1): the picture from 48 pt down,
+// Apps 200 pt in from the trailing side (Apps, Keyboard, Aa 60 and Settings, 8 pt from the edge).
+check(duoInner.layout == L && duoInner.stream == CGRect(x: 8, y: 48, width: 984, height: 654) && duoInner.targets[.apps]!.minX == 800, "1000×710 as the table")
+check(duoOuter.layout == L && duoOuter.stream == CGRect(x: 8, y: 48, width: 694, height: 444) && duoOuter.targets[.apps]!.minX == 510, "710×500 as the table")
 check(duoUp.layout == P && duoUp.stream == CGRect(x: 8, y: 8, width: 694, height: 484) && duoUp.targets[.strip]!.width == 378
       && duoUp.targets[.keys]! == CGRect(x: 14, y: 600, width: 682, height: 48) && duoUp.targets[.trackpad]! == CGRect(x: 14, y: 658, width: 682, height: 320), "710×1000 as the table")
 check(duoOuterUp.layout == P && duoOuterUp.stream == CGRect(x: 8, y: 8, width: 484, height: 339) && duoOuterUp.targets[.strip]!.width == 200
       && duoOuterUp.targets[.keys]!.minY == 437 && duoOuterUp.targets[.keys]!.maxY == 533 && duoOuterUp.targets[.trackpad]!.maxY == 694, "500×710 as the table")
-check(seSide.layout == L && seSide.stream == CGRect(x: 8, y: 86, width: 651, height: 281) && seSide.targets[.strip]!.width == 259, "667×375 as the table")
+check(seSide.layout == L && seSide.stream == CGRect(x: 8, y: 48, width: 651, height: 319) && seSide.targets[.apps]!.minX == 467, "667×375 as the table")
 check(seUp.layout == P && seUp.stream == CGRect(x: 8, y: 8, width: 359, height: 318) && seUp.targets[.strip]!.width == 75
       && seUp.targets[.keys]!.minY == 416 && seUp.targets[.trackpad]! == CGRect(x: 14, y: 522, width: 347, height: 129), "375×667 as the table")
 
@@ -455,18 +458,18 @@ func pinned(_ s: Screen, _ topic: TourTopic, _ h: CGFloat, _ expected: CGRect, t
           "\(s.size) \(topic) h \(h): \(p.card) tail \(String(describing: p.tail)) covers \(p.coversTargets), expected \(expected) \(String(describing: tail)) covers \(covers)", line: line)
     check(p == oracle(s, topic, height: h, width: w), "\(s.size) \(topic) h \(h) against the oracle", line: line)
 }
-// 1000×710, the Duo flat: 360 pt; the bar's card 12 pt under the strip's band (82), tail up.
-pinned(duoInner, .touch, 262, CGRect(x: 320, y: 267, width: 360, height: 262), tail: nil)
-pinned(duoInner, .bar, 230, CGRect(x: 281, y: 94, width: 360, height: 230), tail: TourTail(edge: .up, x: 461))
-pinned(duoInner, .settings, 200, CGRect(x: 624, y: 88, width: 360, height: 200), tail: TourTail(edge: .up, x: 945))
-pinned(duoInner, .bar, 640, CGRect(x: 281, y: 94, width: 360, height: 600), tail: TourTail(edge: .up, x: 461))   // under the bar still: its words scroll
+// 1000×710, the Duo flat: 360 pt; the bar's card 12 pt under the menu bar's buttons (40), tail up.
+pinned(duoInner, .touch, 262, CGRect(x: 320, y: 244, width: 360, height: 262), tail: nil)
+pinned(duoInner, .bar, 230, CGRect(x: 624, y: 52, width: 360, height: 230), tail: TourTail(edge: .up, x: 874))
+pinned(duoInner, .settings, 200, CGRect(x: 624, y: 52, width: 360, height: 200), tail: TourTail(edge: .up, x: 956))
+pinned(duoInner, .bar, 640, CGRect(x: 624, y: 52, width: 360, height: 640), tail: TourTail(edge: .up, x: 874))   // under the bar still: its words scroll
 pinned(duoInner, .touch, 900, CGRect(x: 320, y: 16, width: 360, height: 678), tail: nil)    // the screen less its margins: scrolls
 // 710×500, the outer display on its side: 480 pt wide, below the compact bar (74).
-pinned(duoOuter, .touch, 230, CGRect(x: 115, y: 174, width: 480, height: 230), tail: nil)
-pinned(duoOuter, .bar, 230, CGRect(x: 77, y: 86, width: 480, height: 230), tail: TourTail(edge: .up, x: 317))
-pinned(duoOuter, .settings, 230, CGRect(x: 214, y: 80, width: 480, height: 230), tail: TourTail(edge: .up, x: 664))
-pinned(duoOuter, .settings, 420, CGRect(x: 214, y: 80, width: 480, height: 404), tail: TourTail(edge: .up, x: 664))   // scrolls, the button in view
-pinned(duoOuter, .bar, 520, CGRect(x: 77, y: 86, width: 480, height: 398), tail: TourTail(edge: .up, x: 317))
+pinned(duoOuter, .touch, 230, CGRect(x: 115, y: 155, width: 480, height: 230), tail: nil)
+pinned(duoOuter, .bar, 230, CGRect(x: 214, y: 52, width: 480, height: 230), tail: TourTail(edge: .up, x: 584))
+pinned(duoOuter, .settings, 230, CGRect(x: 214, y: 52, width: 480, height: 230), tail: TourTail(edge: .up, x: 666))
+pinned(duoOuter, .settings, 420, CGRect(x: 214, y: 52, width: 480, height: 420), tail: TourTail(edge: .up, x: 666))   // scrolls, the button in view
+pinned(duoOuter, .bar, 520, CGRect(x: 214, y: 52, width: 480, height: 432), tail: TourTail(edge: .up, x: 584))
 // 710×1000, upright or half-folded: in the top half, its bottom at 480, no tail across the crease.
 pinned(duoUp, .touch, 262, CGRect(x: 175, y: 119, width: 360, height: 262), tail: nil)
 pinned(duoUp, .bar, 230, CGRect(x: 137, y: 250, width: 360, height: 230), tail: nil)
@@ -482,11 +485,11 @@ pinned(duoOuterUp, .laptop, 300, CGRect(x: 70, y: 35, width: 360, height: 300), 
 pinned(duoOuterUp, .laptop, 330, CGRect(x: 70, y: 16, width: 360, height: 330), tail: nil)   // grows down over the window bar
 pinned(duoOuterUp, .bar, 800, CGRect(x: 36, y: 16, width: 360, height: 338), tail: TourTail(edge: .down, x: 216))   // down to 12 pt above the bar
 // 667×375, the iPhone SE sideways: 480 pt wide; the bar card fits under the bar at 230, and scrolls there when taller.
-pinned(seSide, .touch, 200, CGRect(x: 93.5, y: 126.5, width: 480, height: 200), tail: nil)
-pinned(seSide, .bar, 230, CGRect(x: 55.5, y: 86, width: 480, height: 230), tail: TourTail(edge: .up, x: 295.5))
-pinned(seSide, .settings, 230, CGRect(x: 171, y: 80, width: 480, height: 230), tail: TourTail(edge: .up, x: 621))
-pinned(seSide, .bar, 300, CGRect(x: 55.5, y: 86, width: 480, height: 273), tail: TourTail(edge: .up, x: 295.5))   // under the bar, scrolling
-pinned(seSide, .settings, 500, CGRect(x: 171, y: 80, width: 480, height: 279), tail: TourTail(edge: .up, x: 621))
+pinned(seSide, .touch, 200, CGRect(x: 93.5, y: 107.5, width: 480, height: 200), tail: nil)
+pinned(seSide, .bar, 230, CGRect(x: 171, y: 52, width: 480, height: 230), tail: TourTail(edge: .up, x: 541))
+pinned(seSide, .settings, 230, CGRect(x: 171, y: 52, width: 480, height: 230), tail: TourTail(edge: .up, x: 623))
+pinned(seSide, .bar, 300, CGRect(x: 171, y: 52, width: 480, height: 300), tail: TourTail(edge: .up, x: 541))   // under the bar, scrolling
+pinned(seSide, .settings, 500, CGRect(x: 171, y: 52, width: 480, height: 307), tail: TourTail(edge: .up, x: 623))
 // 375×667, the iPhone SE upright: 343 pt, down to the window bar; laptop grows over it, never over the keys.
 pinned(seUp, .touch, 262, CGRect(x: 16, y: 36, width: 343, height: 262), tail: nil)
 pinned(seUp, .bar, 230, CGRect(x: 16, y: 84, width: 343, height: 230), tail: TourTail(edge: .down, x: 153.5))
@@ -547,22 +550,24 @@ pinned(duoPhone, .bar, 320, CGRect(x: 70, y: 16, width: 360, height: 306), tail:
 // A window too small for a card beside its targets (under 200 pt of room): only then over them, with
 // no tail, and the dim then has no cutout or ring (coversTargets).
 let tinySide = model(600, 290), tinyUp = model(330, 420)
-pinned(tinySide, .settings, 190, CGRect(x: 104, y: 80, width: 480, height: 190), tail: TourTail(edge: .up, x: 554))   // fits: under it
-pinned(tinySide, .settings, 250, CGRect(x: 104, y: 24, width: 480, height: 250), tail: nil, covers: true)             // 194 pt of room: over it
+pinned(tinySide, .settings, 190, CGRect(x: 104, y: 52, width: 480, height: 190), tail: TourTail(edge: .up, x: 556))   // fits: under it
+pinned(tinySide, .settings, 250, CGRect(x: 104, y: 52, width: 480, height: 222), tail: TourTail(edge: .up, x: 556))   // under it, its words scrolling
 pinned(tinySide, .touch, 250, CGRect(x: 60, y: 24, width: 480, height: 250), tail: nil)                               // the picture's card: never "covers"
+let shortSide = model(600, 250)   // 182 pt under the menu bar's buttons: a tall card goes over them
+pinned(shortSide, .settings, 230, CGRect(x: 104, y: 16, width: 480, height: 218), tail: nil, covers: true)
 pinned(tinyUp, .bar, 180, CGRect(x: 16, y: 16, width: 298, height: 180), tail: TourTail(edge: .down, x: 131))       // grown, above the bar still
 pinned(tinyUp, .bar, 250, CGRect(x: 16, y: 16, width: 298, height: 250), tail: nil, covers: true)                    // 193 pt above it: over it
 // The home indicator's inset is the bottom margin's floor.
 let phoneSide = model(832, 440)
 let insetPlaced = place(phoneSide, .bar, height: 330, width: 480, inset: 20)
-check(insetPlaced == TourPlacement(card: CGRect(x: 138, y: 86, width: 480, height: 318), tail: TourTail(edge: .up, x: 378)),
-      "832×440 less 20: under the bar, down to the home indicator's margin, its words scrolling: \(insetPlaced)")
-check(place(phoneSide, .bar, height: 300, width: 480, inset: 20) == TourPlacement(card: CGRect(x: 138, y: 86, width: 480, height: 300), tail: TourTail(edge: .up, x: 378)),
+check(insetPlaced == TourPlacement(card: CGRect(x: 336, y: 52, width: 480, height: 330), tail: TourTail(edge: .up, x: 706)),
+      "832×440 less 20: under the menu bar, down to the home indicator's margin: \(insetPlaced)")
+check(place(phoneSide, .bar, height: 300, width: 480, inset: 20) == TourPlacement(card: CGRect(x: 336, y: 52, width: 480, height: 300), tail: TourTail(edge: .up, x: 706)),
       "and one that fits is as tall as its words")
 check(insetPlaced == oracle(phoneSide, .bar, height: 330, width: 480, inset: 20), "the inset, against the oracle")
 // Targets not measured yet: centred in the picture.
 check(TourPolicy.place(card: CGSize(width: 360, height: 200), targets: nil, isStream: false, screen: duoInner.size, layout: L,
-                       stream: duoInner.stream, bottomInset: 0) == TourPlacement(card: CGRect(x: 320, y: 298, width: 360, height: 200), tail: nil),
+                       stream: duoInner.stream, bottomInset: 0) == TourPlacement(card: CGRect(x: 320, y: 275, width: 360, height: 200), tail: nil),
       "no targets: centred in the picture")
 
 // MARK: - Where the card goes: a grid of screens and card heights
@@ -700,31 +705,18 @@ func halvesModel(_ w: CGFloat, _ h: CGFloat, picture: CGFloat, controls: CGFloat
         .keys: CGRect(x: padSide, y: keysY, width: w - 2 * padSide, height: capH),
         .trackpad: CGRect(x: padSide, y: padY, width: w - 2 * padSide, height: h - padBottom - padY)])
 }
-/// The landscape bar at 951 pt, and in the book pose its strip ending 12 pt short of the fold
-/// (DuoPosture.bookBar: 343.5 pt; the right group keeps its size, 55.5 pt past the fold).
+/// The menu bar at 951 pt: in the book pose as open flat, its buttons at the trailing end, on the
+/// trailing page (the menu titles skip the fold; MenuStripLayout).
 let flatLandscape = model(951, 669)
-let bookScreen: Screen = {
-    var targets = flatLandscape.targets
-    targets[.strip] = CGRect(x: 100, y: 5, width: 343.5, height: 77)
-    return Screen(size: bookSize, layout: L, stream: flatLandscape.stream, targets: targets)
-}()
-/// The book pose as this build draws it, the status bar's strip shown at the side (867 pt): the bar
-/// at DuoPosture.bookBar's compact width and 7 pt gaps (Menus at 497, Aa 568, Keyboard 639, Settings
-/// 781), the strip ending 7 pt short of the fold (93 to 448.5); open flat sideways the bar as before.
+let bookScreen = Screen(size: bookSize, layout: L, stream: flatLandscape.stream, targets: flatLandscape.targets)
+/// The book pose as this build draws it, the status bar's strip shown at the side (867 pt).
 let book867Size = CGSize(width: 867, height: 669)
 let flatLandscape867 = model(867, 669)
-let book867: Screen = {
-    var targets = flatLandscape867.targets
-    targets[.strip] = CGRect(x: 93, y: 5, width: 355.5, height: 77)
-    targets[.textSize] = CGRect(x: 568, y: 10, width: 64, height: 66)
-    targets[.keyboard] = CGRect(x: 639, y: 10, width: 64, height: 66)
-    targets[.settings] = CGRect(x: 781, y: 10, width: 64, height: 66)
-    return Screen(size: book867Size, layout: L, stream: flatLandscape867.stream, targets: targets)
-}()
+let book867 = Screen(size: book867Size, layout: L, stream: flatLandscape867.stream, targets: flatLandscape867.targets)
 let laptop = halvesModel(669, 951, picture: 455, controls: 496), flatUpright = halvesModel(669, 951, picture: 424, controls: 424)
 let duoCover = phoneModel(382, 678), duoCoverSide = model(594, 466)
-check(flatLandscape.stream == CGRect(x: 8, y: 94, width: 935, height: 567) && flatLandscape.targets[.textSize]!.minX == 629
-      && flatLandscape.targets[.settings]!.minX == 863, "951×669 as the stream screen lays it out")
+check(flatLandscape.stream == CGRect(x: 8, y: 48, width: 935, height: 613) && flatLandscape.targets[.textSize]!.minX == 839
+      && flatLandscape.targets[.settings]!.minX == 899, "951×669 as the stream screen lays it out")
 check(laptop.stream == CGRect(x: 8, y: 8, width: 653, height: 439) && laptop.targets[.keys]!.minY == 596 && laptop.targets[.trackpad]!.maxY == 929,
       "669×951 half-folded: the picture above the fold, the controls from 496")
 func placeDuo(_ s: Screen, _ topic: TourTopic, height h: CGFloat, fold: FoldInfo, ax: Bool = false, inset: CGFloat = 0) -> TourPlacement {
@@ -748,33 +740,32 @@ check(TourPolicy.width(screen: bookSize, layout: L, accessibilityText: true, fol
 check(TourPolicy.width(screen: bookSize, layout: L, accessibilityText: true, fold: flatInfo) == 560
       && TourPolicy.width(screen: uprightSize, layout: P, accessibilityText: true, fold: laptopInfo) == 560, "open flat and upright: 560")
 check(TourPolicy.width(screen: CGSize(width: 594, height: 466), layout: L, accessibilityText: false, fold: flatInfo) == 480, "the cover on its side: 480")
-// With the status bar's strip (867 pt) the trailing page is 355.5: a card about Settings is that wide,
-// beside it; one about the strip or the picture keeps the leading page's 360 (439.5 at accessibility
-// sizes).
+// With the status bar's strip (867 pt) the trailing page is 355.5: a card about the menu bar's buttons
+// (Settings, Apps, Aa, Keyboard) is that wide, beside them; the picture's keeps the leading page's
+// 439.5 at accessibility sizes.
 check(TourPolicy.width(screen: book867Size, layout: L, accessibilityText: false, fold: bookInfo, targets: book867.union(.settings)) == 355.5,
       "867, Settings: the trailing page's 355.5")
 check(TourPolicy.width(screen: book867Size, layout: L, accessibilityText: true, fold: bookInfo, targets: book867.union(.settings)) == 355.5,
       "867, Settings, accessibility sizes: 355.5")
-check(TourPolicy.width(screen: book867Size, layout: L, accessibilityText: false, fold: bookInfo, targets: book867.union(.bar)) == 360
+check(TourPolicy.width(screen: book867Size, layout: L, accessibilityText: false, fold: bookInfo, targets: book867.union(.bar)) == 355.5
       && TourPolicy.width(screen: book867Size, layout: L, accessibilityText: true, fold: bookInfo, targets: book867.union(.touch)) == 439.5,
-      "867, the bar and the picture: the leading page")
+      "867: the menu bar's buttons on the trailing page, the picture on the leading")
 check(TourPolicy.width(screen: book867Size, layout: L, accessibilityText: false, fold: bookInfo) == 360, "867, no targets yet: the wider page")
-// The book pose: the picture's card on the leading page, against the fold; a bar card that would
-// cross it goes onto the page its middle is on; one clear of it stays centred on its targets.
-duoPinned(bookScreen, .touch, 262, bookInfo, CGRect(x: 95.5, y: 246.5, width: 360, height: 262), tail: nil)
-duoPinned(bookScreen, .bar, 230, bookInfo, CGRect(x: 95.5, y: 94, width: 360, height: 230), tail: TourTail(edge: .up, x: 427.5))
-duoPinned(bookScreen, .settings, 200, bookInfo, CGRect(x: 575, y: 88, width: 360, height: 200), tail: TourTail(edge: .up, x: 896))
-// The book pose as drawn, 867 pt: the picture's card and the bar's on the leading page against the
-// fold; Settings' on the trailing page, beside the button, with its tail at it (the review: at 360 pt
-// it went to the far page, its tail clamped at the card's edge).
-check(book867.targets[.strip]!.maxX == 448.5 && book867.targets[.settings]!.maxX == 845 && book867.stream == CGRect(x: 8, y: 94, width: 851, height: 567),
+// The book pose: the picture's card on the leading page, against the fold; the menu bar's buttons
+// are on the trailing page, and their cards with them.
+duoPinned(bookScreen, .touch, 262, bookInfo, CGRect(x: 95.5, y: 223.5, width: 360, height: 262), tail: nil)
+duoPinned(bookScreen, .bar, 230, bookInfo, CGRect(x: 575, y: 52, width: 360, height: 230), tail: TourTail(edge: .up, x: 825))
+duoPinned(bookScreen, .settings, 200, bookInfo, CGRect(x: 575, y: 52, width: 360, height: 200), tail: TourTail(edge: .up, x: 907))
+// The book pose as drawn, 867 pt: the picture's card on the leading page against the fold; the
+// buttons' cards on the trailing page, 355.5 wide, beside them, with their tails at them.
+check(book867.targets[.settings]!.maxX == 859 && book867.stream == CGRect(x: 8, y: 48, width: 851, height: 613),
       "867×669 as the stream screen lays it out")
-duoPinned(book867, .touch, 262, bookInfo, CGRect(x: 95.5, y: 246.5, width: 360, height: 262), tail: nil)
-duoPinned(book867, .bar, 230, bookInfo, CGRect(x: 95.5, y: 94, width: 360, height: 230), tail: TourTail(edge: .up, x: 398))
-duoPinned(book867, .settings, 200, bookInfo, CGRect(x: 495.5, y: 88, width: 355.5, height: 200), tail: TourTail(edge: .up, x: 813))
-duoPinned(flatLandscape867, .settings, 200, flatInfo, CGRect(x: 491, y: 88, width: 360, height: 200), tail: TourTail(edge: .up, x: 812))
+duoPinned(book867, .touch, 262, bookInfo, CGRect(x: 95.5, y: 223.5, width: 360, height: 262), tail: nil)
+duoPinned(book867, .bar, 230, bookInfo, CGRect(x: 495.5, y: 52, width: 355.5, height: 230), tail: TourTail(edge: .up, x: 741))
+duoPinned(book867, .settings, 200, bookInfo, CGRect(x: 495.5, y: 52, width: 355.5, height: 200), tail: TourTail(edge: .up, x: 823))
+duoPinned(flatLandscape867, .settings, 200, flatInfo, CGRect(x: 491, y: 52, width: 360, height: 200), tail: TourTail(edge: .up, x: 823))
 // Open flat sideways: as before, across the middle.
-duoPinned(flatLandscape, .touch, 262, flatInfo, CGRect(x: 295.5, y: 246.5, width: 360, height: 262), tail: nil)
+duoPinned(flatLandscape, .touch, 262, flatInfo, CGRect(x: 295.5, y: 223.5, width: 360, height: 262), tail: nil)
 check(placeDuo(flatLandscape, .bar, height: 230, fold: flatInfo) == placeDuo(flatLandscape, .bar, height: 230, fold: .inferred), "open flat: the fold changes nothing")
 // The laptop pose: in the picture above the fold, never across it, no tail across it.
 duoPinned(laptop, .touch, 262, laptopInfo, CGRect(x: 154.5, y: 96.5, width: 360, height: 262), tail: nil)
@@ -839,22 +830,25 @@ check(touchPad.title == "Tap, Hold and Drag" && touchPad.subtitle == "What you d
 check(texts(touchPad) == ["Tap to click.", "Touch and hold to right-click.", "Drag to scroll.", "Apple Pencil works as a mouse."], "touch on iPad: \(texts(touchPad))")
 check(touchPad.rows.map(\.symbol) == ["hand.tap", "contextualmenu.and.cursorarrow", "hand.draw", "applepencil"], "touch's symbols")
 check(touchPad.rows[0].spans == [TourSpan(text: "Tap", strong: true), TourSpan(text: " to click.", strong: false)], "the control's name semibold")
-check(touchPad.hint == "The picture of Mac mini fills the screen below the bar.", "touch's hint sideways")
+check(touchPad.hint == "The picture of Mac mini fills the screen below the menu bar.", "touch's hint sideways")
 check(words(.touch, P).hint == "The picture of Mac mini fills the top half of the screen.", "touch's hint upright")
 check(texts(words(.touch, L, device: "iPhone")) == ["Tap to click.", "Touch and hold to right-click.", "Drag to scroll."], "no Pencil row on iPhone")
 check(words(.touch, L, mac: "").subtitle == "What you do here happens on your Mac." && words(.touch, P, mac: "").hint == "The picture of your Mac fills the top half of the screen.",
       "the “your Mac” fallback")
 let barL = words(.bar, L)
 check(barL.title == "Windows and Text Size" && barL.subtitle == nil, "bar: title, no subtitle")
-check(texts(barL) == ["Touch and hold a window to close, minimize or go full screen. Keep holding and drag to move it.",
-                      "Aa: touch it and slide to make a window’s text larger or smaller.",
+// Sideways no thumbnails: the swipes switch apps and Spaces, and Aa is the Desktop's too
+// (.planboard/strip-gestures D1, D2, D4, D5).
+check(texts(barL) == ["Swipe three fingers left or right to switch apps; four fingers switch Spaces.",
+                      "Aa: touch it and slide to make text on Mac mini larger or smaller.",
                       "Keyboard types on Mac mini, on screen or with a hardware keyboard."], "bar sideways: \(texts(barL))")
-check(barL.rows.map(\.symbol) == ["hand.point.up.left", "textformat.size", "keyboard"], "bar's symbols")
-check(texts(words(.bar, P)) == Array(texts(barL).prefix(2)), "bar upright: no Keyboard row (it is a cap)")
-check(barL.hint == "In the bar at the top, after Apps." && words(.bar, P).hint == "In the bar below the picture, after Apps.", "bar's hints")
+check(barL.rows.map(\.symbol) == ["hand.draw", "textformat.size", "keyboard"], "bar's symbols")
+check(texts(words(.bar, P)) == ["Touch and hold a window to close, minimize or go full screen. Keep holding and drag to move it.",
+                                "Aa: touch it and slide to make a window’s text larger or smaller."], "bar upright: the windows, no Keyboard row (it is a cap)")
+check(barL.hint == "In the menu bar at the top, after the menus of Mac mini." && words(.bar, P).hint == "In the bar below the picture, after Apps.", "bar's hints")
 check(texts(words(.bar, L, mac: "Studio")).last == "Keyboard types on Studio, on screen or with a hardware keyboard.", "the Mac's name in the Keyboard row")
 let settingsL = words(.settings, L)
-check(settingsL.title == "Settings" && settingsL.subtitle == nil && settingsL.hint == "The last button in the bar.", "settings: title, hint")
+check(settingsL.title == "Settings" && settingsL.subtitle == nil && settingsL.hint == "The last button in the menu bar.", "settings: title, hint")
 check(texts(settingsL) == ["Disconnect is at the bottom of Settings.", "Take the Tour is there too, to see this again.",
                            "Hold your iPad upright for a trackpad and keys."], "settings sideways on iPad")
 check(settingsL.rows.map(\.symbol) == ["xmark.circle", "questionmark.circle", "ipad"], "settings' symbols on iPad")
@@ -888,7 +882,8 @@ check(touchPad.rows[1].spoken == "Touch and hold to right-click.", "a row is spo
 // A phone held upright: the bar card names row 1's Keyboard, as sideways; the laptop card has no
 // keyboard key (that is row 1's button); the hints say where the rows are.
 let barPhone = words(.bar, F, device: "iPhone")
-check(texts(barPhone) == texts(words(.bar, L, device: "iPhone")) && texts(barPhone).count == 3, "a phone's bar card: as sideways, with Keyboard")
+check(texts(barPhone) == texts(words(.bar, P, device: "iPhone")) + ["Keyboard types on Mac mini, on screen or with a hardware keyboard."],
+      "a phone's bar card: the halves', with Keyboard")
 check(barPhone.hint == "Under the picture: Aa and Keyboard in the first row, the windows in the second.", "a phone's bar hint")
 check(words(.touch, F, device: "iPhone").hint == "The picture of Mac mini is at the top of the screen.", "a phone's picture hint")
 check(words(.settings, F, device: "iPhone").hint == "The last button in the row under the picture."
@@ -926,8 +921,8 @@ check([L, P].allSatisfy { layout in all.allSatisfy { words($0, layout, thumbnail
       "no thumbnails changes no words sideways or in the halves")
 // Under VoiceOver: no touch card, no trackpad rows, and no gesture VoiceOver cannot make.
 let barVO = words(.bar, L, voiceOver: true)
-check(texts(barVO) == ["Each window has actions: close, minimize, full screen, and move left or right. Swipe up or down to hear them.",
-                       "Text size makes a window’s text on Mac mini larger or smaller. Swipe up or down on it.",
+check(texts(barVO) == ["Apps lists the apps on Mac mini. Choose an open one again for its next window.",
+                       "Text size makes text on Mac mini larger or smaller. Swipe up or down on it.",
                        "Keyboard types on Mac mini, on screen or with a hardware keyboard."], "bar under VoiceOver: \(texts(barVO))")
 let laptopVO = words(.laptop, P, voiceOver: true, first: true)
 check(laptopVO.rows.count == 2 && laptopVO.rows[0].spoken == "Command, Option, Control and Shift stay on for the next key: Command, then C, copies."

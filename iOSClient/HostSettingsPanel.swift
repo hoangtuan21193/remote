@@ -53,9 +53,6 @@ struct HostSettingsPanel: View {
     /// This device's switch for the keyboard at a text field on the Mac (docs/keyboard-auto-plan.md):
     /// on unless turned off, shown while the Mac reports its text focus.
     @AppStorage(StreamClient.openKeyboardKey) private var openKeyboardOn = true
-    /// This device's switch for the Mac's menu bar along the top of the stream (MacMenuStrip): on
-    /// unless turned off, shown while the Mac sends its menus.
-    @AppStorage(StreamClient.menuStripKey) private var menuStripOn = true
     /// VoiceOver is on: it keeps three-finger swipes and taps for itself, so the This iPad group says
     /// its rows do the gestures instead.
     @State private var voiceOver = HostSettingsPanel.voiceOverRunning
@@ -511,16 +508,6 @@ struct HostSettingsPanel: View {
             }
             Footnote(text: ClipboardPolicy.Copy.footnote(on: clipboardOn, mac: mac, device: device))
         }
-        // The Mac's menu bar along the top of the stream: only while the Mac sends its menus.
-        if !client.menus.menus.isEmpty {
-            Rows {
-                Toggle(isOn: $menuStripOn) {
-                    Text("Mac Menu Bar").foregroundStyle(Palette.text)
-                }
-                .rowFrame()
-            }
-            Footnote(text: Self.menuStripFooter(mac: mac))
-        }
         // The keyboard at a text field (docs/keyboard-auto-plan.md): only while the Mac reports its focus.
         if (client.hostTextFocus ?? 0) >= TextFocusPolicy.generation {
             Rows {
@@ -541,17 +528,12 @@ struct HostSettingsPanel: View {
                 ForEach(Self.gestureRows, id: \.gesture) { row in
                     RowDivider()
                     GestureRow(symbol: row.symbol, gesture: row.gesture, action: row.action, does: row.does) {
-                        _ = client.sendGesture($0, fingers: 3)
+                        _ = client.sendGesture($0.gesture, fingers: $0.fingers)
                     }
                 }
             }
         }
         Footnote(text: gesturesFooter)
-    }
-
-    /// Under Open Keyboard Automatically.
-    static func menuStripFooter(mac: String) -> String {
-        "The menus of the app you see, File, Edit, View and the rest, in a thin bar along the top of the picture, as on \(mac). Tap one to open it. Held sideways; the Menus button has them everywhere."
     }
 
     static func openKeyboardFooter(mac: String) -> String {
@@ -568,14 +550,18 @@ struct HostSettingsPanel: View {
     /// closes (StreamScreen's `largerPictureHeld`).
     static let largerPictureFooter = "Held upright, a window’s picture takes the place of the window thumbnails and reaches down to where the keyboard comes up. The Desktop keeps the thumbnails. Switch windows with Apps: tap an open app again for its next window. To fill the taller picture with a window, set its text size with Aa. A change applies when you close Settings."
 
-    /// What each gesture does on the Mac, and what the row does as an accessibility action: its one
-    /// gesture, or, for the Spaces, one action each way (natural direction: a swipe left brings the
-    /// Space on the right). The pinch opens Launchpad on macOS 14 and 15, from the same key.
+    /// What each gesture does, and what the row does as an accessibility action: its one gesture, or
+    /// one action each way for the apps and the Spaces (natural direction: a swipe left brings the
+    /// Space on the right). Three fingers left or right step through this device's app switcher
+    /// (AppSwitcherPolicy); four fingers left or right are the Mac's Spaces (2026-10-25,
+    /// .planboard/strip-gestures D2, D4). The pinch opens Launchpad on macOS 14 and 15, from the same key.
     private static let gestureRows: [(symbol: String, gesture: String, action: String, does: [GestureRow.Action])] = [
         ("arrow.up", "Swipe Up", "Mission Control", [GestureRow.Action(name: "Mission Control", gesture: .swipeUp)]),
         ("arrow.down", "Swipe Down", "App Exposé", [GestureRow.Action(name: "App Exposé", gesture: .swipeDown)]),
-        ("arrow.left.and.right", "Swipe Left or Right", "Spaces", [GestureRow.Action(name: "Space on the Right", gesture: .swipeLeft),
-                                                                   GestureRow.Action(name: "Space on the Left", gesture: .swipeRight)]),
+        ("arrow.left.and.right", "Swipe Left or Right", "Switch Apps", [GestureRow.Action(name: "Next App", gesture: .swipeLeft),
+                                                                        GestureRow.Action(name: "Previous App", gesture: .swipeRight)]),
+        ("hand.draw", "Four Fingers Left or Right", "Spaces", [GestureRow.Action(name: "Space on the Right", gesture: .swipeLeft, fingers: 4),
+                                                                GestureRow.Action(name: "Space on the Left", gesture: .swipeRight, fingers: 4)]),
         ("arrow.down.right.and.arrow.up.left", "Pinch", "Apps", [GestureRow.Action(name: "Apps", gesture: .pinch)]),
         ("arrow.up.left.and.arrow.down.right", "Spread", "Show Desktop", [GestureRow.Action(name: "Show Desktop", gesture: .spread)]),
     ]
@@ -587,8 +573,8 @@ struct HostSettingsPanel: View {
         // VoiceOver keeps three-finger swipes and taps for itself, and no touch of them reaches Sill.
         var text = voiceOver ? "VoiceOver keeps three-finger gestures for itself, so the rows above do them on \(mac) instead."
             : "Three fingers on the trackpad or over the stream."
-        text += " While a window streams, a gesture shows the Desktop first, and the opposite gesture closes what one opened. \(mac) does these with its own keyboard shortcuts: one turned off in its Keyboard settings does nothing."
-        if device == "iPad" { text += " Four-finger swipes and a Magic Keyboard trackpad’s gestures stay with iPadOS." }
+        text += " Left or right steps through your apps here: stop and the one lit opens. The others go to \(mac): while a window streams, a gesture shows the Desktop first, and the opposite gesture closes what one opened. \(mac) does these with its own keyboard shortcuts: one turned off in its Keyboard settings does nothing."
+        if device == "iPad" { text += " Four-finger swipes and a Magic Keyboard trackpad’s gestures stay with iPadOS: change Spaces with Mission Control." }
         return text
     }
 
@@ -742,20 +728,20 @@ private struct AdaptiveRow<Control: View>: View {
 /// make three-finger strokes, or keep them) it does its gesture: a button for one, a named action
 /// each way for the Spaces.
 private struct GestureRow: View {
-    struct Action { let name: String; let gesture: TrackpadGestures.Gesture }
+    struct Action { let name: String; let gesture: TrackpadGestures.Gesture; var fingers = 3 }
     let symbol: String
     let gesture: String
     let action: String
     let does: [Action]
-    let perform: (TrackpadGestures.Gesture) -> Void
+    let perform: (Action) -> Void
     /// Measured afresh when the text size changes, as `AdaptiveRow` is.
     @Environment(\.dynamicTypeSize) private var typeSize
     var body: some View {
         if let only = does.first, does.count == 1 {
-            row.accessibilityAddTraits(.isButton).accessibilityAction { perform(only.gesture) }
+            row.accessibilityAddTraits(.isButton).accessibilityAction { perform(only) }
         } else {
             row.accessibilityActions {
-                ForEach(does, id: \.name) { item in Button(item.name) { perform(item.gesture) } }
+                ForEach(does, id: \.name) { item in Button(item.name) { perform(item) } }
             }
         }
     }

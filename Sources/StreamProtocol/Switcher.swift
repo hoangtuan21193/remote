@@ -64,13 +64,21 @@ public struct WindowList: Codable {
     /// is `editable`, `caret` and `tap`. Nil from every host before 2026-10-25: a device sends it no
     /// kind 33 and opens its keyboard only with its button.
     public var textFocus: Int?
+    /// Whether this host takes the Desktop's text size (`Viewport.desktop`):
+    /// 1 is a viewport's `scale` with `desktop` true turned into one of the Mac display's own scaled
+    /// modes while the Desktop streams, and the display's own mode back when it stops. Nil from every
+    /// host before 2026-10-25, and from a synthetic host without its TEST ONLY modes: a device sends
+    /// no `desktop` to either, and dims its text size control on the Desktop.
+    public var desktopScale: Int?
 
     public init(macName: String, windows: [WindowInfo], active: StreamSource, launchID: String? = nil,
                 hostVersion: String? = nil, protocol: Int? = nil, gestures: Int? = nil, clipboard: Int? = nil,
-                textFocus: Int? = nil) {
+                textFocus: Int? = nil,
+                desktopScale: Int? = nil) {
         self.macName = macName; self.windows = windows; self.active = active; self.launchID = launchID
         self.hostVersion = hostVersion; self.protocol = `protocol`; self.gestures = gestures
         self.clipboard = clipboard; self.textFocus = textFocus
+        self.desktopScale = desktopScale
     }
 }
 

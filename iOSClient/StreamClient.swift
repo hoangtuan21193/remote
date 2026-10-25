@@ -291,6 +291,10 @@ final class StreamClient: ObservableObject {
     /// This connection's menus: the Mac's top level (the streamed app's menu bar), the menus this
     /// device asked for and waits on, and the choices it sent. Reset on every tear-down.
     @Published private(set) var menus = MacMenuState()
+    /// The last three-finger swipe left or right (TrackpadGestures.route): the stream screen's app
+    /// switcher steps on each new one (AppSwitcherPolicy). `serial` tells two alike apart.
+    struct SwitcherSwipe: Equatable { let forward: Bool; let serial: Int }
+    @Published private(set) var switcherSwipe: SwitcherSwipe? = nil
     /// Each opened menu's completion, by its key, until `menus` settles it: exactly once.
     private var menuCompletions: [Int: (MacMenuState.Content) -> Void] = [:]
     private var menuKey = 0
@@ -783,6 +787,10 @@ final class StreamClient: ObservableObject {
     /// six, nil from a Mac before 2026-09-27, which is sent none (`sendGesture`). Cleared with the
     /// session.
     @Published var hostGestures: Int?
+    /// Whether this session's Mac changes its display's resolution for Aa while the Desktop streams
+    /// (`WindowList.desktopScale`, 1; .planboard/strip-gestures D5): nil from an older Mac, where Aa is
+    /// dimmed on the Desktop. Cleared with the session.
+    @Published var hostDesktopScale: Int?
     /// The clipboard (kind 32, StreamClient+Clipboard, docs/clipboard-plan.md): what this session's
     /// Mac takes and sends (`WindowList.clipboard`, 1 for text), nil from a Mac before it or with Share
     /// clipboard with devices off. Cleared with the session.
@@ -3134,6 +3142,7 @@ final class StreamClient: ObservableObject {
         hostVersion = nil
         hostProtocol = nil
         hostGestures = nil
+        hostDesktopScale = nil
         remoteRoute = nil
         macInfo = nil
         macInfoSaved = false
@@ -3330,11 +3339,6 @@ final class StreamClient: ObservableObject {
     /// does (`PhonePortraitLayout.largerPicture(switchOn:streaming:)`).
     static let largerPictureKey = "Sill.largerPicture"
 
-    /// This device's switch for the Mac's menu bar as a strip along the top of the stream (the
-    /// Settings panel's This iPhone group, 2026-10-25; MacMenuStrip): on unless turned off. The
-    /// device's own preference, never sent to the Mac; the landscape stream screen reads it.
-    static let menuStripKey = "Sill.macMenuStrip"
-
     /// A three- or four-finger gesture a surface decided (TrackpadGestures, StrokeObserver), to the
     /// Mac as kind 28, which turns it into its own shortcut (docs/trackpad-gestures-plan.md §6.3):
     /// only while this device's switch is on and the Mac says it takes gestures. While a window
@@ -3342,8 +3346,21 @@ final class StreamClient: ObservableObject {
     /// (Mission Control, App Exposé, Apps, Show Desktop) is in a window's picture. A pointer move
     /// still waiting goes before the gesture, as before any input but a move. Nothing else: no
     /// pointer, no scroll, and a latched modifier stays latched. Main thread. True when it went.
+    ///
+    /// Three fingers left or right never go: they step the app switcher instead (`switcherSwipe`,
+    /// TrackpadGestures.route), with the switch on; four fingers go only left or right, the Spaces.
     @discardableResult
     func sendGesture(_ gesture: TrackpadGestures.Gesture, fingers: Int) -> Bool {
+        switch TrackpadGestures.route(gesture, fingers: fingers) {
+        case .nothing:
+            return false
+        case .switcher(let forward):
+            guard Self.gesturesOn, connected else { return false }
+            switcherSwipe = SwitcherSwipe(forward: forward, serial: (switcherSwipe?.serial ?? 0) + 1)
+            return true
+        case .mac:
+            break
+        }
         var windowStreams = false
         if case .window = active { windowStreams = true }
         let plan = TrackpadGestures.sending(switchOn: Self.gesturesOn, connected: connected, hostGestures: hostGestures,
@@ -3654,6 +3671,7 @@ final class StreamClient: ObservableObject {
                 if self.hostVersion != list.hostVersion { self.hostVersion = list.hostVersion }
                 if self.hostProtocol != list.protocol { self.hostProtocol = list.protocol }
                 if self.hostGestures != list.gestures { self.hostGestures = list.gestures }
+                if self.hostDesktopScale != list.desktopScale { self.hostDesktopScale = list.desktopScale }
                 // The clipboard: subscribe (or stop) as the Mac's word and this device's switch say.
                 self.hostClipboardChanged(list.clipboard)
                 // The text focus: subscribe (or stop) as the Mac's word and this device's switch say.

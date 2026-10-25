@@ -860,5 +860,16 @@ check("5,000 random strokes (\(tallies.sorted { $0.key < $1.key }.map { "\($0.ke
 check("the random strokes reach every gesture, with three fingers and with four", G.Gesture.allCases.allSatisfy { g in tallies["\(g.rawValue)3"] != nil }
       && tallies.keys.contains { $0.hasSuffix("4") })
 
+// MARK: - Where a gesture goes (.planboard/strip-gestures D2, D4)
+
+check("route: three fingers left step the switcher forward", G.route(.swipeLeft, fingers: 3) == .switcher(forward: true))
+check("route: three fingers right step it back", G.route(.swipeRight, fingers: 3) == .switcher(forward: false))
+for g in [G.Gesture.swipeUp, .swipeDown, .pinch, .spread] {
+    check("route: three fingers \(g.rawValue) go to the Mac", G.route(g, fingers: 3) == .mac)
+    check("route: four fingers \(g.rawValue) do nothing", G.route(g, fingers: 4) == .nothing)
+}
+check("route: four fingers left or right go to the Mac (the Spaces)",
+      G.route(.swipeLeft, fingers: 4) == .mac && G.route(.swipeRight, fingers: 4) == .mac)
+
 print("\(passes + fails) checks, \(fails) failed")
 exit(fails == 0 ? 0 : 1)

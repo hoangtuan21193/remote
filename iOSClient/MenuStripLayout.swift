@@ -1,18 +1,15 @@
 import CoreGraphics
 
-/// The Mac's menu bar as a thin strip along the top of the stream (2026-10-25): the streamed app's
-/// menu titles in a row, as the Mac draws them, each opening its menu where it sits
-/// (`MacMenuStrip`). Settings › Mac menu bar turns it on and off (`StreamClient.menuStripKey`). It
-/// sits under the landscape bar, and at the screen's top edge while the bar is hidden, so the menus
-/// are one tap away whether the bar shows or not.
+/// The Mac's menu bar as a thin strip along the top of the stream (2026-10-25), the one bar held
+/// sideways (.planboard/strip-gestures D1): the streamed app's menu titles in a row, as the Mac draws
+/// them, each opening its menu where it sits (`MacMenuStrip`), the device's own buttons after them.
 ///
 /// Where each title goes, from the titles' widths alone (the glue measures them in the strip's
 /// font): left to right from `side`, each `titlePad` either side of its words; never across the
 /// fold's band in the iPhone Duo's book pose (a title that would cross it starts after it); never
-/// into `trailingRoom` (the stashed bar's tab, over the strip's end while the bar is hidden). Titles
-/// that do not all fit leave the first that does not and every one after it to the `more` button
-/// (»), at the strip's trailing end, in the Mac's order, so the order on screen and in the overflow
-/// is always the Mac's.
+/// into `trailingRoom`. Titles that do not all fit leave the first that does not and every one after
+/// it to the `more` button (»), at the trailing end of the titles' room, in the Mac's order, so the
+/// order on screen and in the overflow is always the Mac's.
 struct MenuStripLayout: Equatable {
     static let height: CGFloat = 32
     static let side: CGFloat = 8
