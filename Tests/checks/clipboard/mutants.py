@@ -7,9 +7,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 P = "ClipboardPolicy.swift"
 MUTANTS = [
     # The wire.
-    ("kind 32 as 33", "StreamMessage.swift", "case clipboard = 32", "case clipboard = 33"),
-    ("the list's clipboard never stored", "Switcher.swift", "self.clipboard = clipboard\n", "self.clipboard = nil\n"),
-    ("clipboard 1 by default", "Switcher.swift", "gestures: Int? = nil, clipboard: Int? = nil) {", "gestures: Int? = nil, clipboard: Int? = 1) {"),
+    ("kind 32 as 34", "StreamMessage.swift", "case clipboard = 32", "case clipboard = 34"),
+    ("the list's clipboard never stored", "Switcher.swift", "self.clipboard = clipboard;", "self.clipboard = nil;"),
+    ("clipboard 1 by default", "Switcher.swift", "gestures: Int? = nil, clipboard: Int? = nil,\n", "gestures: Int? = nil, clipboard: Int? = 1,\n"),
     ("stop false by default (a subscription is no longer {})", "Clipboard.swift", "image: Data? = nil, stop: Bool? = nil) {", "image: Data? = nil, stop: Bool? = false) {"),
     ("a 512 KB cap", "Clipboard.swift", "public static let maxTextBytes = 256 * 1024", "public static let maxTextBytes = 512 * 1024"),
     ("generation 2", P, "public static let generation = 1", "public static let generation = 2"),
@@ -94,7 +94,8 @@ MUTANTS = [
     ("a receipt's payload the length of a ping's", P, "public static let receiptLength = 16", "public static let receiptLength = 8"),
     ("a receipt waited for without its floor", P, "{ max(4, 4 * Double(worstRttMs ?? 0) / 1000) }", "{ 4 * Double(worstRttMs ?? 0) / 1000 }"),
     ("a receipt waited for twice the round trip", P, "{ max(4, 4 * Double(worstRttMs ?? 0) / 1000) }", "{ max(4, 2 * Double(worstRttMs ?? 0) / 1000) }"),
-    ("the chip under the link's line", P, "landscape && !linkLineShown ? .topTrailing : .bottomTrailing", "landscape ? .topTrailing : .bottomTrailing"),
+    ("the chip under the link's line", P, "landscape && !linkLineShown && !barFolded ? .topTrailing : .bottomTrailing", "landscape && !barFolded ? .topTrailing : .bottomTrailing"),
+    ("the chip under the folded bar's button", P, "landscape && !linkLineShown && !barFolded ? .topTrailing : .bottomTrailing", "landscape && !linkLineShown ? .topTrailing : .bottomTrailing"),
     ("the cap in thousands", P, 'public static var cap: String { "\\(Clipboard.maxTextBytes / 1024) KB" }', 'public static var cap: String { "\\(Clipboard.maxTextBytes / 1000) KB" }'),
     ("the Mac's footnote promises every password manager's copy (the review's copy finding)", P,
      "Copies a password manager marks as concealed stay on this Mac.\"", "A password manager’s copies stay on this Mac.\""),

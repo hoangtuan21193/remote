@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings — Virtual Display</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0A64D6;text-decoration:none}a:hover{color:#084FA8}
+</style>
+</helmet>
+<div style="width: 520px; height: 760px; position: relative; overflow: hidden; background: #ECECEC; color: #1D1D1F; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-size: 13px; border-radius: 10px; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.25)">
+  <div style="height: 80px; background: #F6F6F6; border-bottom: 0.5px solid rgba(0,0,0,0.15); position: relative">
+    <div style="position: absolute; left: 12px; top: 9px; display: flex; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #FEBC2E"></span><span style="width: 12px; height: 12px; border-radius: 6px; background: #28C840"></span></div>
+    <div style="position: absolute; left: 0; right: 0; top: 6px; text-align: center; font-weight: 600">Virtual Display</div>
+    <nav aria-label="Settings tabs" style="position: absolute; left: 0; right: 0; top: 28px; display: flex; justify-content: center; gap: 2px; font-size: 11px">
+      <a href="SettingsGeneral.dc.html" style="width: 76px; height: 46px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #3A3A3C"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>General</a>
+      <a href="SettingsDevices.dc.html" style="width: 76px; height: 46px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #3A3A3C"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="12" height="17" rx="2"></rect><rect x="16" y="9" width="6" height="11" rx="1.5"></rect></svg>Devices</a>
+      <a href="SettingsStreaming.dc.html" style="width: 76px; height: 46px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #3A3A3C"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M10 9l5 3-5 3z"></path></svg>Streaming</a>
+      <a href="SettingsVirtualDisplay.dc.html" aria-current="page" style="width: 76px; height: 46px; border-radius: 6px; background: rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #0A64D6"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>Virtual Display</a>
+      <a href="SettingsPermissions.dc.html" style="width: 76px; height: 46px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #3A3A3C"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"></path></svg>Permissions</a>
+      <a href="SettingsRemoteAccess.dc.html" style="width: 76px; height: 46px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #3A3A3C"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"></path></svg>Remote Access</a>
+    </nav>
+  </div>
+
+  <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 6px">
+    <div style="background: #FFFFFF; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.1); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center">Stream from a virtual display<span role="switch" aria-checked="true" aria-label="Stream from a virtual display" style="width: 26px; height: 15px; border-radius: 8px; background: #0A64D6; position: relative"><span style="position: absolute; right: 1px; top: 1px; width: 13px; height: 13px; border-radius: 7px; background: #FFF"></span></span></div>
+    <p style="margin: 0 12px 10px 12px; font-size: 11px; line-height: 14px; color: #6E6E73">Sill moves the window you pick onto an invisible display made for your device, so it keeps updating when other windows cover it and text is drawn at your device’s scale. The window leaves this screen while it streams and comes back when you stop streaming or quit Sill.</p>
+
+    <h2 style="margin: 4px 12px 2px 12px; font-size: 13px; font-weight: 600">Status</h2>
+    <div style="background: #FFFFFF; border-radius: 8px; border: 0.5px solid rgba(0,0,0,0.1)">
+      <div style="padding: 8px 12px; display: flex; justify-content: space-between">Virtual display<span style="color: #1E7F34">Available</span></div>
+      <div style="height: 0.5px; background: rgba(0,0,0,0.1); margin: 0 12px"></div>
+      <div style="padding: 8px 12px; display: flex; justify-content: space-between">Last window<span style="color: #6E6E73">Xcode — StreamClient.swift</span></div>
+    </div>
+    <p style="margin: 0 12px; font-size: 11px; line-height: 14px; color: #6E6E73">Uses a private macOS interface (CGVirtualDisplay). If a macOS update breaks it, Sill streams the window where it is.</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":520,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

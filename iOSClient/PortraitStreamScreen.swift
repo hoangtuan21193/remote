@@ -13,6 +13,14 @@ enum HIDKey {
     static let leftArrow: UInt16 = 0x50
     static let downArrow: UInt16 = 0x51
     static let upArrow: UInt16 = 0x52
+    /// The Mac keys bar's (KeyboardAccessoryBar): F1 (F2 to F12 follow it), and the keys above the
+    /// arrows on a full keyboard.
+    static let f1: UInt16 = 0x3A
+    static let home: UInt16 = 0x4A
+    static let pageUp: UInt16 = 0x4B
+    static let deleteForward: UInt16 = 0x4C
+    static let end: UInt16 = 0x4D
+    static let pageDown: UInt16 = 0x4E
 
     /// US-layout character → HID usage. Shortcuts are named by the unshifted key (⌘⇧S is the S
     /// key with two modifiers), so the character is lowercased first. Returns nil for anything
@@ -144,7 +152,7 @@ struct PortraitStreamScreen: View {
     @Binding var textScale: Double?
     @Binding var scaleOpen: Bool
     @Binding var windowMenu: UInt32?
-    @Binding var latched: KeyModifiers
+    @Binding var latch: ModifierLatch
     let overlay: InputOverlayProxy
     /// The Settings panel, owned by `StreamScreen` (see its `setSettings`).
     let settingsOpen: Bool
@@ -170,6 +178,11 @@ struct PortraitStreamScreen: View {
     var largerKeyboard: CGFloat? = nil
 
     private var streamShape: RoundedRectangle { RoundedRectangle(cornerRadius: 12, style: .continuous) }
+    /// How far the picture is slid up over the software keyboard (KeyboardLift): seldom upright,
+    /// where the keyboard covers the controls, not the picture.
+    @State private var lift: CGFloat = 0
+    /// The picture pane's top in the window, which the lift is measured from.
+    @State private var panelTop: CGFloat?
     /// The Duo's fold across this screen (StreamScreen, iOS 27.1): where the halves split.
     @Environment(\.duoFold) private var duoFold
 
@@ -346,7 +359,12 @@ struct PortraitStreamScreen: View {
                         .opacity(drawerOpen || settingsOpen ? 0 : 1)
                         .accessibilityHidden(drawerOpen)
                 }
-                keyRow(.phone).accessibilityHidden(drawerOpen)
+                // The Mac keys bar over the keyboard has these keys and more (D8): the row goes while
+                // the person's keyboard is up, under it anyway.
+                keyRow(.phone)
+                    .opacity(keyboardShown ? 0 : 1)
+                    .allowsHitTesting(!keyboardShown)
+                    .accessibilityHidden(drawerOpen || keyboardShown)
                 trackpad(verticalSpan: span).accessibilityHidden(drawerOpen)
             }
 
@@ -461,15 +479,21 @@ struct PortraitStreamScreen: View {
                          setOwnPointer: { client.setOwnPointer($0, from: $1) },
                          proxy: overlay,
                          isKeyboardShown: $keyboardShown,
-                         latchedModifiers: latched,
-                         onModifiersConsumed: { latched = [] },
-                         sendGesture: { client.sendGesture($0, fingers: $1) })
+                         latch: $latch,
+                         sendGesture: { client.sendGesture($0, fingers: $1) },
+                         sendFromBar: { client.sendFromKeyRow($0) },
+                         caret: client.textCaret,
+                         lift: $lift,
+                         panelTop: panelTop)
         }
+        .offset(y: -lift)
+        .animation(.easeOut(duration: 0.25), value: lift)
         .background(Palette.panel)
         .overlay(alignment: .top) { LinkLineView(text: linkLine) }
         .clipShape(streamShape)
         .overlay(streamShape.strokeBorder(Color.white.opacity(0.09), lineWidth: 1))
         .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { if measured { onPanelSize($0) } })
+        .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .global).minY }, action: { panelTop = $0 })
         .tourTarget(.stream)
     }
 
@@ -483,7 +507,7 @@ struct PortraitStreamScreen: View {
 
     /// A key row key keeps what the sprite shows (StreamClient.sendFromKeyRow).
     private func keyRow(_ keys: KeyRow.Keys) -> some View {
-        KeyRow(metrics: metrics, keys: keys, latched: $latched, keyboardShown: keyboardShown,
+        KeyRow(metrics: metrics, keys: keys, latch: $latch, keyboardShown: keyboardShown,
                send: { client.sendFromKeyRow($0) },
                toggleKeyboard: { overlay.toggleKeyboard() },
                showSpotlight: client.active == .desktop)
@@ -495,8 +519,8 @@ struct PortraitStreamScreen: View {
                  setPointer: { client.setOwnPointer($0, from: .trackpad) },
                  feed: { let f = client.pointerFeedState; return (f.anchor, f.reseeds) },
                  onFingers: { client.trackpadFingers($0) },
-                 latched: latched,
-                 onModifiersConsumed: { latched = [] },
+                 latched: latch.held,
+                 onModifiersConsumed: { latch.spend() },
                  verticalSpan: verticalSpan,
                  sendGesture: { client.sendGesture($0, fingers: $1) })
             .tourTarget(.trackpad)
@@ -731,7 +755,7 @@ private struct KeyRow: View {
 
     let metrics: PortraitMetrics
     let keys: Keys
-    @Binding var latched: KeyModifiers
+    @Binding var latch: ModifierLatch
     let keyboardShown: Bool
     let send: (InputEvent) -> Void
     let toggleKeyboard: () -> Void
@@ -824,13 +848,13 @@ private struct KeyRow: View {
         case .press(_, let usage, _), .arrow(_, let usage, _):
             press(usage)
         case .modifier(_, let flag, _):
-            latched.formSymmetricDifference(flag)
+            latch.tap(flag, at: ProcessInfo.processInfo.systemUptime)
         case .keyboard:
             toggleKeyboard()
         case .spotlight:
             // Latched modifiers do not join ⌘Space, but the tap still spends them.
             Spotlight.press(send: send)
-            latched = []
+            latch.spend()
         }
     }
 
@@ -864,23 +888,29 @@ private struct KeyRow: View {
             .foregroundStyle(Palette.text)
     }
 
-    /// A latching modifier: it stays lit until something uses it, or until it is tapped again.
+    /// A latching modifier: it stays lit until something uses it, or until it is tapped again; tapped
+    /// twice it locks, underlined, until tapped again (ModifierLatch).
     private func latchKey(_ key: Key, _ title: String, _ flag: KeyModifiers, label: String) -> some View {
-        let on = latched.contains(flag)
+        let on = latch.held.contains(flag)
+        let locked = latch.locked.contains(flag)
         return cap(open: on,
-                   label: on ? "\(label), held. Tap to release." : "\(label), hold for the next key",
+                   label: locked ? "\(label), locked. Tap to release." : on ? "\(label), held. Tap twice to lock, once to release."
+                       : "\(label), hold for the next key",
                    largeContent: title, action: { tap(key) }) {
             Text(title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(on ? Palette.accent : Palette.text)
+                .overlay(alignment: .bottom) {
+                    if locked { Capsule().fill(Palette.accent).frame(height: 2).offset(y: 5) }
+                }
         }
     }
 
     /// escape, tab and the arrows: down and up, carrying whatever is latched, and the latch is
     /// spent — ⌥← is one tap on opt then one on the left arrow.
     private func press(_ usage: UInt16) {
-        KeyChord.press(usage, with: latched).forEach(send)
-        latched = []
+        KeyChord.press(usage, with: latch.held).forEach(send)
+        latch.spend()
     }
 
     #if DEBUG
@@ -896,7 +926,7 @@ private struct KeyRow: View {
                     print("input test: no \(title) cap in this key row"); return
                 }
                 tap(key)
-                print("input test: the key row's \(title) tapped; latched now " + InputTest.describe(latched))
+                print("input test: the key row's \(title) tapped; latched now " + InputTest.describe(latch.held))
             }
         }
     }

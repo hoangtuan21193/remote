@@ -158,6 +158,15 @@ MUTANTS = [
     # Shifted return and tab
     ("shifted return and tab to the text system (the shift lost)", CHORDS, "            || (shiftedKeyUsages.contains(usage) && modifiers & KeyModifiers.shift.rawValue != 0)\n", ""),
     ("return and tab as keys whatever is held", CHORDS, "(shiftedKeyUsages.contains(usage) && modifiers & KeyModifiers.shift.rawValue != 0)", "shiftedKeyUsages.contains(usage)"),
+    # The latch (ModifierLatch)
+    ("a second tap never locks", CHORDS, "                locked.formUnion(flag)\n", "                held.subtract(flag)\n"),
+    ("a locked one spent by a key", CHORDS, "    mutating func spend() { held = locked }", "    mutating func spend() { held = [] }"),
+    ("a locked one never let go", CHORDS, "            locked.subtract(flag)\n            held.subtract(flag)\n", "            held.subtract(flag)\n"),
+    ("any late second tap locks", CHORDS, "time - at >= 0, time - at <= Self.doubleTap", "time - at >= 0"),
+    ("a tap from before the first locks", CHORDS, "time - at >= 0, time - at <= Self.doubleTap", "time - at <= Self.doubleTap"),
+    ("the double tap half a second", CHORDS, "static let doubleTap = 0.35", "static let doubleTap = 0.5"),
+    ("clear keeps the locks", CHORDS, "        held = []\n        locked = []\n", "        held = []\n"),
+    ("the hold's time never kept", CHORDS, "            heldAt[flag.rawValue] = time\n", ""),
 ]
 caught = 0
 for name, rel, old, new in MUTANTS:

@@ -178,7 +178,7 @@ check(!json(takes).contains("clipboard") && !json(list).contains("clipboard"), "
 check(decodedOld != nil && decodedOld?.clipboard == nil, "an older host's list decodes, clipboard nil")
 check(Wire.decode(WindowList.self, from: Wire.encode(shares)).map { $0.clipboard == 1 && $0.gestures == 1 } == true, "clipboard round-trips beside gestures")
 check(StreamMessageKind.clipboard.rawValue == 32 && StreamMessageKind(rawValue: 32) == .clipboard, "kind 32 is the clipboard")
-check([29, 30, 31, 33].allSatisfy { StreamMessageKind(rawValue: $0) == nil }, "29, 30, 31 and 33 not this build's")
+check([29, 30, 31, 34].allSatisfy { StreamMessageKind(rawValue: $0) == nil }, "29, 30, 31 and 34 not this build's")
 let clip = Clipboard(text: "Hello")
 check(json(clip) == #"{"text":"Hello"}"# && json(Clipboard()) == "{}" && json(Clipboard(stop: true)) == #"{"stop":true}"#, "kind 32's keys: \(json(clip))")
 check(Wire.decode(Clipboard.self, from: Data(#"{"text":"a","image":"AQID","later":1}"#.utf8)) == Clipboard(text: "a", image: Data([1, 2, 3])),
@@ -186,6 +186,24 @@ check(Wire.decode(Clipboard.self, from: Data(#"{"text":"a","image":"AQID","later
 let clipboardMessage = StreamMessage(kind: .clipboard, timestamp: 1, isKeyframe: false, payload: Wire.encode(clip)).serialized()
 check(StreamMessage.parseHeader(clipboardMessage)?.kind == .clipboard && clipboardMessage.count == StreamMessage.headerLength + Wire.encode(clip).count,
       "the clipboard's header parses, then the JSON")
+
+// Kind 33, the text focus (docs/keyboard-auto-plan.md), and the window list's `textFocus`: additive both
+// ways, as the clipboard's. A device sends kind 33 only to a host whose list says it.
+let focuses = WindowList(macName: "Mac mini", windows: [], active: .desktop, launchID: "L", hostVersion: "0.7", protocol: 1,
+                         gestures: TrackpadGesture.generation, clipboard: ClipboardPolicy.generation,
+                         textFocus: TextFocusPolicy.generation)
+check(json(focuses).contains(#""textFocus":1"#), "a list from a host that reports its text focus says textFocus 1: \(json(focuses))")
+check(!json(shares).contains("textFocus") && decodedOld?.textFocus == nil, "a list without it leaves the key out; an older host's decodes, textFocus nil")
+check(Wire.decode(WindowList.self, from: Wire.encode(focuses)).map { $0.textFocus == 1 && $0.clipboard == 1 } == true,
+      "textFocus round-trips beside clipboard")
+check(StreamMessageKind.textFocus.rawValue == 33 && StreamMessageKind(rawValue: 33) == .textFocus, "kind 33 is the text focus")
+let focus = TextFocus(editable: true, caret: TextFocusRect(x: 0.25, y: 0.5, w: 0, h: 0.03125), tap: true)
+check(json(focus) == #"{"caret":{"h":0.03125,"w":0,"x":0.25,"y":0.5},"editable":true,"tap":true}"#
+      && json(TextFocus()) == "{}" && json(TextFocus(stop: true)) == #"{"stop":true}"#, "kind 33's keys: \(json(focus))")
+check(Wire.decode(TextFocus.self, from: Data(#"{"editable":false,"later":1}"#.utf8)) == TextFocus(editable: false),
+      "a later field is skipped")
+let focusMessage = StreamMessage(kind: .textFocus, timestamp: 1, isKeyframe: false, payload: Wire.encode(focus)).serialized()
+check(StreamMessage.parseHeader(focusMessage)?.kind == .textFocus, "the text focus's header parses")
 
 // For H4: what cb0ec55's StreamProtocol must read.
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : nil
@@ -199,6 +217,8 @@ if let out {
         "windowListGestures": String(decoding: Wire.encode(takes), as: UTF8.self),
         "windowListClipboard": String(decoding: Wire.encode(shares), as: UTF8.self),
         "clipboardMessage": clipboardMessage.base64EncodedString(),
+        "windowListTextFocus": String(decoding: Wire.encode(focuses), as: UTF8.self),
+        "textFocusMessage": focusMessage.base64EncodedString(),
     ]
     try! JSONSerialization.data(withJSONObject: payloads, options: [.sortedKeys, .prettyPrinted]).write(to: URL(fileURLWithPath: out))
 }

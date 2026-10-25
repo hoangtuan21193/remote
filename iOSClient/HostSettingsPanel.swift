@@ -50,6 +50,9 @@ struct HostSettingsPanel: View {
     /// This device's switch for the clipboard (docs/clipboard-plan.md): on unless turned off, read by
     /// StreamClient+Clipboard at each decision; a change subscribes or stops at once.
     @AppStorage(StreamClient.clipboardKey) private var clipboardOn = true
+    /// This device's switch for the keyboard at a text field on the Mac (docs/keyboard-auto-plan.md):
+    /// on unless turned off, shown while the Mac reports its text focus.
+    @AppStorage(StreamClient.openKeyboardKey) private var openKeyboardOn = true
     /// VoiceOver is on: it keeps three-finger swipes and taps for itself, so the This iPad group says
     /// its rows do the gestures instead.
     @State private var voiceOver = HostSettingsPanel.voiceOverRunning
@@ -505,6 +508,17 @@ struct HostSettingsPanel: View {
             }
             Footnote(text: ClipboardPolicy.Copy.footnote(on: clipboardOn, mac: mac, device: device))
         }
+        // The keyboard at a text field (docs/keyboard-auto-plan.md): only while the Mac reports its focus.
+        if (client.hostTextFocus ?? 0) >= TextFocusPolicy.generation {
+            Rows {
+                Toggle(isOn: $openKeyboardOn) {
+                    Text("Open Keyboard Automatically").foregroundStyle(Palette.text)
+                }
+                .rowFrame()
+                .onChange(of: openKeyboardOn) { _, _ in client.textFocusSwitchChanged() }
+            }
+            Footnote(text: Self.openKeyboardFooter(mac: mac))
+        }
         Rows {
             Toggle(isOn: $gesturesOn) {
                 Text("Three-Finger Gestures").foregroundStyle(Palette.text)
@@ -520,6 +534,11 @@ struct HostSettingsPanel: View {
             }
         }
         Footnote(text: gesturesFooter)
+    }
+
+    /// Under Open Keyboard Automatically.
+    static func openKeyboardFooter(mac: String) -> String {
+        "Tap a text field on \(mac) and the keyboard comes up; tap elsewhere and it goes. The picture slides up to keep what you type in view."
     }
 
     /// The Mac's window list said it takes the gestures (`WindowList.gestures`).

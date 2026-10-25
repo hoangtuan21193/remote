@@ -1,0 +1,30 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-25T10:30:00Z"},
+  "title": "Sill — Mac",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 760, "h": 600, "title": "Status menu — streaming"},
+    "PairWindow.dc.html": {"x": 840, "y": 0, "w": 440, "h": 600, "title": "Pair iPhone or iPad"},
+    "CableNotice.dc.html": {"x": 1360, "y": 0, "w": 440, "h": 190, "title": "Paired over the USB cable"},
+    "SettingsGeneral.dc.html": {"x": 0, "y": 1000, "w": 520, "h": 760, "title": "Settings — General"},
+    "SettingsDevices.dc.html": {"x": 600, "y": 1000, "w": 520, "h": 760, "title": "Settings — Devices"},
+    "SettingsStreaming.dc.html": {"x": 1200, "y": 1000, "w": 520, "h": 760, "title": "Settings — Streaming"},
+    "SettingsVirtualDisplay.dc.html": {"x": 1800, "y": 1000, "w": 520, "h": 760, "title": "Settings — Virtual Display"},
+    "SettingsPermissions.dc.html": {"x": 2400, "y": 1000, "w": 520, "h": 760, "title": "Settings — Permissions"},
+    "SettingsRemoteAccess.dc.html": {"x": 3000, "y": 1000, "w": 520, "h": 760, "title": "Settings — Remote Access"},
+    "LogWindow.dc.html": {"x": 0, "y": 2160, "w": 900, "h": 520, "title": "Sill Log"}
+  },
+  "order": [
+    "Main.dc.html", "PairWindow.dc.html", "CableNotice.dc.html",
+    "SettingsGeneral.dc.html", "SettingsDevices.dc.html", "SettingsStreaming.dc.html", "SettingsVirtualDisplay.dc.html", "SettingsPermissions.dc.html", "SettingsRemoteAccess.dc.html",
+    "LogWindow.dc.html"
+  ],
+  "notes": {
+    "t1": {"x": 0, "y": -300, "text": "Menu bar and pairing", "kind": "title1", "maxW": 1800},
+    "t2": {"x": 0, "y": 700, "text": "Settings window", "kind": "title1", "maxW": 3520},
+    "t3": {"x": 0, "y": 1860, "text": "Log", "kind": "title1", "maxW": 900}
+  },
+  "designSystems": []
+}

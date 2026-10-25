@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Apps drawer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#9BB7FF}a:hover{color:#C3D3FF}
+input::placeholder{color:#A4ABB5}
+</style>
+</helmet>
+<div style="width: 402px; height: 874px; position: relative; overflow: hidden; background: #000000; color: #EEF0F3; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif">
+
+  <div style="position: absolute; left: 8px; top: 70px; width: 386px; height: 241px; border-radius: 12px; background: #FFFFFF; overflow: hidden" aria-hidden="true">
+    <div style="height: 22px; background: #ECECEC"></div>
+  </div>
+  <div style="position: absolute; left: 0; top: 0; width: 402px; height: 874px; background: rgba(0,0,0,0.58)" aria-hidden="true"></div>
+
+  <div style="position: absolute; left: 14px; top: 335px; width: 374px; height: 50px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+    <button aria-label="Close the app list" style="border: 0; border-radius: 14px; background: #2C3550; color: #9BB7FF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: 500 11px -apple-system, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5L21 21"></path></svg>Apps</button>
+    <button aria-label="Text size" style="border: 0; border-radius: 14px; background: #23262C; color: #C4C9D1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: 500 11px -apple-system, system-ui, sans-serif"><span style="font-size: 17px; font-weight: 500; height: 22px; line-height: 22px">Aa</span>1×</button>
+    <button aria-label="Show the keyboard" style="border: 0; border-radius: 14px; background: #23262C; color: #C4C9D1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: 500 11px -apple-system, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"></path></svg>Keyboard</button>
+    <button aria-label="Show the full Mac desktop" style="border: 0; border-radius: 14px; background: #23262C; color: #C4C9D1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: 500 11px -apple-system, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M9 20h6M12 16v4"></path></svg>Desktop</button>
+    <button aria-label="Settings for Mac Studio" style="border: 0; border-radius: 14px; background: #23262C; color: #C4C9D1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: 500 11px -apple-system, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>Settings</button>
+  </div>
+
+  <section aria-label="Apps on Mac Studio" style="position: absolute; left: 14px; top: 393px; width: 374px; height: 465px; box-sizing: border-box; border-radius: 20px; background: #16181C; border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 24px 60px rgba(0,0,0,0.65); padding: 14px; display: flex; flex-direction: column; gap: 6px; overflow: hidden">
+    <label style="height: 48px; border-radius: 12px; background: #23262C; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #A4ABB5">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5L21 21"></path></svg>
+      <input type="search" aria-label="Search apps on this Mac" placeholder="Search apps on Mac Studio" style="flex: 1; border: 0; background: transparent; color: #EEF0F3; font: 15px -apple-system, system-ui, sans-serif; outline: none">
+    </label>
+    <h2 style="margin: 8px 4px 2px 4px; font-size: 13px; font-weight: 600; color: #A4ABB5">Open now</h2>
+    <button style="height: 50px; border: 0; border-radius: 10px; background: #23262C; color: #EEF0F3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font: 15px -apple-system, system-ui, sans-serif; text-align: left"><span style="width: 32px; height: 32px; border-radius: 9px; background: #F2C94C; color: #000; font: 700 12px/32px -apple-system, system-ui, sans-serif; text-align: center">No</span><span style="flex: 1">Notes</span><span style="font-size: 13px; color: #A4ABB5">1 window</span></button>
+    <button style="height: 50px; border: 0; border-radius: 10px; background: transparent; color: #EEF0F3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font: 15px -apple-system, system-ui, sans-serif; text-align: left"><span style="width: 32px; height: 32px; border-radius: 9px; background: #3B82F6; color: #FFF; font: 700 12px/32px -apple-system, system-ui, sans-serif; text-align: center">Sa</span><span style="flex: 1">Safari</span><span style="font-size: 13px; color: #A4ABB5">2 windows</span></button>
+    <button style="height: 50px; border: 0; border-radius: 10px; background: transparent; color: #EEF0F3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font: 15px -apple-system, system-ui, sans-serif; text-align: left"><span style="width: 32px; height: 32px; border-radius: 9px; background: #3A3D44; color: #FFF; font: 700 12px/32px -apple-system, system-ui, sans-serif; text-align: center">Te</span><span style="flex: 1">Terminal</span><span style="font-size: 13px; color: #A4ABB5">1 window</span></button>
+    <h2 style="margin: 8px 4px 2px 4px; font-size: 13px; font-weight: 600; color: #A4ABB5">All apps</h2>
+    <button style="height: 46px; border: 0; border-radius: 10px; background: transparent; color: #EEF0F3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font: 15px -apple-system, system-ui, sans-serif; text-align: left"><span style="width: 32px; height: 32px; border-radius: 9px; background: #E5484D; color: #FFF; font: 700 12px/32px -apple-system, system-ui, sans-serif; text-align: center">Ca</span><span style="flex: 1">Calendar</span></button>
+    <button style="height: 46px; border: 0; border-radius: 10px; background: transparent; color: #EEF0F3; display: flex; align-items: center; gap: 12px; padding: 0 10px; font: 15px -apple-system, system-ui, sans-serif; text-align: left"><span style="width: 32px; height: 32px; border-radius: 9px; background: #30A46C; color: #FFF; font: 700 12px/32px -apple-system, system-ui, sans-serif; text-align: center">Me</span><span style="flex: 1">Messages</span></button>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

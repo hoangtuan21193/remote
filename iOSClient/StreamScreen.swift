@@ -104,9 +104,15 @@ struct StreamScreen: View {
     @ObservedObject var client: StreamClient
     @State private var drawerOpen = false
     @State private var keyboardShown = false
-    /// Modifiers held down by the portrait key row until the next key, character or click uses
-    /// them. Lives up here so rotating the iPad does not drop a half-typed shortcut.
-    @State private var latched: KeyModifiers = []
+    /// Modifiers held down by the portrait key row and the Mac keys bar until the next key, character
+    /// or click uses them, or for good while locked (ModifierLatch). Lives up here so rotating the iPad
+    /// does not drop a half-typed shortcut.
+    @State private var latch = ModifierLatch()
+    /// How far the picture is slid up over the software keyboard (KeyboardLift), the landscape
+    /// layout's; the upright ones keep their own.
+    @State private var lift: CGFloat = 0
+    /// The stream panel's top in the window, which the lift is measured from.
+    @State private var panelTop: CGFloat?
     /// The bar's Keyboard button drives the overlay's first responder through this.
     @State private var overlay = InputOverlayProxy()
     /// The Aa control's text scale, device points per Mac point; nil means the Mac window has never
@@ -173,6 +179,17 @@ struct StreamScreen: View {
     /// This device's Larger Picture switch (the Settings panel's This iPhone; docs/larger-picture-plan.md).
     /// It acts only while a window streams (`largerPictureNow`).
     @AppStorage(StreamClient.largerPictureKey) private var largerPicture = false
+    /// The landscape bar hidden in a tab on the trailing edge, as a stashed Picture in Picture window
+    /// is (`BarStash`, `setBarPeek`), so the
+    /// stream takes the screen; this device's own choice, kept across launches. The tour shows it
+    /// whole while it runs (`barShown`).
+    /// `-SillBarHidden YES` starts folded.
+    @AppStorage("SillBarHidden") private var barHidden = false
+    /// The hidden bar is down over the stream for a while (`setBarPeek`).
+    @State private var barPeek = false
+    /// Where the stashed bar's tab sits along the trailing edge, 0 (top) to 1 (bottom); the device's own.
+    @AppStorage("SillBarStash") private var barStashY = 0.0
+    @State private var barPeekHide: Task<Void, Never>? = nil
     /// Larger Picture as it was in effect when the Settings panel opened (`largerPictureNow`), which
     /// the arrangement keeps until the panel closes; nil while it is closed. The panel hangs under row
     /// 1, which the arrangement moves by the picture's growth (157 pt on an 18 Pro Max), so a change
@@ -265,7 +282,8 @@ struct StreamScreen: View {
                 // nothing else does (the frame around it is empty). Near the bar, off the link's line,
                 // inside the stream panel's corner; never while something is open over the stream.
                 if clipboardChipAllowed, client.clipboardChip || client.clipboardNote != nil, let panel = tourTargets[.stream] {
-                    let corner = ClipboardPolicy.chipCorner(landscape: layout == .landscape, linkLineShown: shownLinkLine != nil)
+                    let corner = ClipboardPolicy.chipCorner(landscape: layout == .landscape, linkLineShown: shownLinkLine != nil,
+                                                            barFolded: !barShown)
                     ClipboardChip(client: client)
                         .frame(maxWidth: max(0, panel.width - 16), alignment: .trailing)
                         .padding(8)
@@ -332,6 +350,18 @@ struct StreamScreen: View {
             }
         }
         .animation(.spring(duration: 0.25, bounce: 0.2), value: windowMenu)
+        // The Mac's text focus after this device's click (docs/keyboard-auto-plan.md): the keyboard
+        // comes up for a text field, and goes again at a tap elsewhere when a field brought it up
+        // (TextFocusPolicy.answer). Not while something open over the stream holds the keyboard's fate.
+        .onChange(of: client.textFocusEvent) { _, event in
+            guard let event, tour == nil, !overlayShown, !settingsOpen else { return }
+            switch TextFocusPolicy.answer(event.report, keyboard: overlay.focusKeyboard,
+                                          switchOn: StreamClient.openKeyboardOn, sinceTap: client.sinceLastClick) {
+            case .open: overlay.openForFocus()
+            case .close: overlay.closeForFocus()
+            case .keep: break
+            }
+        }
         .onChange(of: client.pendingLink) { _, link in
             // An outside link while streaming: the panel and the keyboard go first, as for Pair This iPad….
             if link != nil { openLinkOverlay() }
@@ -1027,19 +1057,106 @@ struct StreamScreen: View {
     private func landscape(bar plain: BarMetrics, width: CGFloat, fold: FoldInfo) -> some View {
         // The book pose (docs/iphone-duo-plan.md, (a)): nothing on the fold's band; elsewhere as before.
         let (bar, stripWidth) = plain.clearing(fold, width: width)
+        // The bar's handle and hint sit in the middle of the leading page in the book pose (off the
+        // fold, as the link's line), in the middle of the screen otherwise.
+        let handleX = (DuoPosture.leadingPage(fold) ?? width) / 2
+        let peeking = !barShown && barPeek
         return VStack(spacing: 0) {
-            TopBar(client: client, metrics: bar, stripWidth: stripWidth, drawerOpen: $drawerOpen,
-                   keyboardShown: $keyboardShown,
-                   textScale: $textScale, scaleOpen: $scaleOpen, windowMenu: $windowMenu,
-                   settingsOpen: settingsOpen,
-                   // Apps, Menus, Aa, Keyboard, Desktop, Settings, and the strip.
-                   menusFit: MacMenuButton.fits(width: width - 2 * bar.padding, buttons: 6, buttonWidth: bar.buttonWidth,
-                                                gap: bar.gap, thumbWidth: bar.thumbWidth),
-                   toggleKeyboard: { overlay.toggleKeyboard() },
-                   setSettings: { setSettings($0, restoreKeyboard: $1) },
-                   menusOpened: menusOpened, menusClosed: menusClosed)
-            contentArea(bar: bar)
+            if barShown {
+                topBar(bar, stripWidth: stripWidth, width: width)
+                    .overlay(alignment: .bottomLeading) {
+                        BarHandle(x: handleX, hide: { setBarHidden(true) })
+                            .opacity(scaleOpen ? 0 : 1)
+                            .allowsHitTesting(!scaleOpen)
+                    }
+                    // Over the content area: the handle's touch reaches into the gap under the bar.
+                    .zIndex(1)
+                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+            }
+            // Hidden, the way a Picture in Picture window is stashed: the stream takes the whole screen,
+            // a tab waits on the trailing edge (`BarStash`), and the bar comes down over the stream (no
+            // resize, no refit of the Mac window) and goes up again by itself (`BarPeek`).
+            contentArea(bar: bar, under: peeking ? bar.height : 0)
+                .overlay(alignment: .top) {
+                    if peeking {
+                        topBar(bar, stripWidth: stripWidth, width: width)
+                            .shadow(color: .black.opacity(0.45), radius: 14, y: 4)
+                            .overlay(alignment: .bottomLeading) {
+                                BarHandle(x: handleX, hide: { setBarPeek(false) }, keep: { setBarHidden(false) })
+                                    .opacity(scaleOpen ? 0 : 1)
+                                    .allowsHitTesting(!scaleOpen)
+                            }
+                            .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+                    }
+                }
+                .overlay(alignment: .topTrailing) {
+                    if !barShown && !barPeek {
+                        BarStash(position: $barStashY, show: { setBarPeek(true) })
+                            .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
+                    }
+                }
+                // What the bar is used for keeps it down a while longer.
+                .onChange(of: client.active) { _, _ in if peeking { setBarPeek(true) } }
+                .onChange(of: textScale) { _, _ in if peeking { setBarPeek(true) } }
+                .onChange(of: keyboardShown) { _, _ in if peeking { setBarPeek(true) } }
         }
+    }
+
+    private func topBar(_ bar: BarMetrics, stripWidth: CGFloat?, width: CGFloat) -> some View {
+        TopBar(client: client, metrics: bar, stripWidth: stripWidth, drawerOpen: $drawerOpen,
+               keyboardShown: $keyboardShown,
+               textScale: $textScale, scaleOpen: $scaleOpen, windowMenu: $windowMenu,
+               settingsOpen: settingsOpen,
+               // Apps, Menus, Aa, Keyboard, Desktop, Settings, and the strip.
+               menusFit: MacMenuButton.fits(width: width - 2 * bar.padding, buttons: 6, buttonWidth: bar.buttonWidth,
+                                            gap: bar.gap, thumbWidth: bar.thumbWidth),
+               toggleKeyboard: { overlay.toggleKeyboard() },
+               setSettings: { setSettings($0, restoreKeyboard: $1) },
+               menusOpened: menusOpened, menusClosed: menusClosed)
+    }
+
+    /// The landscape bar is drawn whole, above the stream: not hidden, or the tour runs (its cards
+    /// point at it).
+    private var barShown: Bool { !barHidden || tour != nil }
+
+    /// Hides the bar (video-player style) or keeps it shown for good. Either way what hangs from it
+    /// goes: the drawer, the Settings panel, a thumbnail's lights. The stream panel grows or shrinks,
+    /// and the viewport follows it as on any resize (`panelSize`).
+    private func setBarHidden(_ hidden: Bool) {
+        putAwayBarPanels()
+        barPeekHide?.cancel()
+        withAnimation(.easeOut(duration: 0.2)) {
+            barPeek = false
+            barHidden = hidden
+        }
+    }
+
+    /// The hidden bar comes down over the stream (`true`, which also restarts its clock) or goes up.
+    /// It goes up by itself after `BarPeek.seconds` with nothing open from it (the drawer, the
+    /// Settings panel, the Aa ruler, a thumbnail's lights, the Menus pull-down); with something open
+    /// it waits, and looks again as often.
+    private func setBarPeek(_ shown: Bool) {
+        barPeekHide?.cancel()
+        if !shown { putAwayBarPanels() }
+        if shown != barPeek { withAnimation(.easeOut(duration: 0.2)) { barPeek = shown } }
+        guard shown else { return }
+        barPeekHide = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(BarPeek.seconds))
+                guard !Task.isCancelled, barPeek else { return }
+                if !(drawerOpen || settingsOpen || scaleOpen || windowMenu != nil || menusOpen) {
+                    putAwayBarPanels()
+                    withAnimation(.easeOut(duration: 0.2)) { barPeek = false }
+                    return
+                }
+            }
+        }
+    }
+
+    private func putAwayBarPanels() {
+        setSettings(false)
+        drawerOpen = false
+        windowMenu = nil
     }
 
     /// `largerKeyboard`: Larger Picture's keyboard on a phone (see `body`), nil otherwise.
@@ -1047,7 +1164,7 @@ struct StreamScreen: View {
         PortraitStreamScreen(client: client, metrics: metrics, drawerOpen: $drawerOpen,
                              keyboardShown: $keyboardShown,
                              textScale: $textScale, scaleOpen: $scaleOpen, windowMenu: $windowMenu,
-                             latched: $latched, overlay: overlay,
+                             latch: $latch, overlay: overlay,
                              settingsOpen: settingsOpen,
                              setSettings: { setSettings($0, restoreKeyboard: $1) },
                              menusOpened: menusOpened, menusClosed: menusClosed,
@@ -1061,7 +1178,9 @@ struct StreamScreen: View {
 
     private var streamShape: RoundedRectangle { RoundedRectangle(cornerRadius: 12, style: .continuous) }
 
-    private func contentArea(bar: BarMetrics) -> some View {
+    /// `under`: the height of a bar drawn over the top of this area (the hidden bar come down), which
+    /// the drawer and the Settings panel hang below.
+    private func contentArea(bar: BarMetrics, under: CGFloat = 0) -> some View {
         ZStack(alignment: .topLeading) {
             Color.black
 
@@ -1073,16 +1192,23 @@ struct StreamScreen: View {
                              setOwnPointer: { client.setOwnPointer($0, from: $1) },
                              proxy: overlay,
                              isKeyboardShown: $keyboardShown,
-                             latchedModifiers: latched,
-                             onModifiersConsumed: { latched = [] },
-                             sendGesture: { client.sendGesture($0, fingers: $1) })
+                             latch: $latch,
+                             sendGesture: { client.sendGesture($0, fingers: $1) },
+                             sendFromBar: { client.sendFromKeyRow($0) },
+                             caret: client.textCaret,
+                             lift: $lift,
+                             panelTop: panelTop)
             }
+            // Up over the keyboard, the video and the input view together, inside the panel.
+            .offset(y: -lift)
+            .animation(.easeOut(duration: 0.25), value: lift)
             .background(Palette.panel)
             .overlay(alignment: .top) { LinkLineView(text: shownLinkLine) }
             .clipShape(streamShape)
             .overlay(streamShape.strokeBorder(Color.white.opacity(0.09), lineWidth: 1))
             // The panel itself, inside the padding: the size the host fits the Mac window to.
             .onGeometryChange(for: CGSize.self, of: { $0.size }, action: { panelSize = $0 })
+            .onGeometryChange(for: CGFloat.self, of: { $0.frame(in: .global).minY }, action: { panelTop = $0 })
             .tourTarget(.stream)
             .padding(8)
 
@@ -1099,7 +1225,7 @@ struct StreamScreen: View {
                     .frame(width: 380)
                     .frame(maxHeight: .infinity)
                     .padding(.leading, 22)
-                    .padding(.top, 8)
+                    .padding(.top, 8 + under)
                     .padding(.bottom, 14)
                     .transition(.opacity)
             }
@@ -1117,7 +1243,7 @@ struct StreamScreen: View {
                                   takeTour: takeTour)
                     .frame(width: bar.settingsWidth)
                     .frame(maxHeight: .infinity, alignment: .top)
-                    .padding(.top, 8)
+                    .padding(.top, 8 + under)
                     .padding(.bottom, 14)
                     .padding(.trailing, bar.padding)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -1315,6 +1441,100 @@ private struct TopBar: View {
                     .foregroundStyle(open ? Palette.accent : Palette.barLabel)
             }
         }
+    }
+}
+
+// MARK: - Folding the bar
+
+/// The landscape bar's grabber: a short capsule in the black gap just under the bar, clear of the
+/// thumbnails' badges, in the middle of the screen (of the leading page in the book pose). A tap,
+/// or a swipe up, hides the bar (`BarStash`). Its touch is 64×20 pt, 12 in the bar's bottom margin
+/// and 8 in the gap over the stream panel (over the stream itself while the hidden bar is down).
+/// On the hidden bar come down, a swipe down (`keep`) keeps the bar shown for good.
+private struct BarHandle: View {
+    let x: CGFloat
+    let hide: () -> Void
+    var keep: (() -> Void)? = nil
+
+    var body: some View {
+        Capsule(style: .continuous)
+            .fill(Palette.muted.opacity(0.55))
+            .frame(width: 36, height: 4)
+            .padding(.top, 14)
+            .frame(width: 64, height: 20, alignment: .top)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: hide)
+            .gesture(DragGesture(minimumDistance: 6).onEnded { drag in
+                if drag.translation.height < -12 { hide() } else if drag.translation.height > 12 { keep?() }
+            })
+            .offset(x: x - 32, y: 8)
+            .accessibilityElement()
+            .accessibilityLabel("Hide the bar")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { hide() }
+            .accessibilityAction(named: "Keep the bar shown") { keep?() }
+    }
+}
+
+/// How long the hidden bar stays down over the stream with nothing open from it.
+enum BarPeek {
+    static let seconds: Double = 4
+}
+
+/// The hidden bar, stashed the way a Picture in Picture window is: a 30×84 pt tab on the screen's
+/// trailing edge, at its top at first (8 pt down), rounded on its inner side, the bar's colour over a
+/// material, with a chevron pointing in. A tap, or a pull inward, brings the bar down over the
+/// stream; a drag up or down moves the tab along the edge (kept, `SillBarStash`), off whatever it
+/// covers. Its touch is 52×100 pt, the only stretch of the picture it takes touches from. The clipboard chip goes to the bottom corner while the bar is
+/// hidden (`ClipboardPolicy.chipCorner`).
+private struct BarStash: View {
+    @Binding var position: Double
+    let show: () -> Void
+    @State private var drag: CGFloat = 0
+    static let size = CGSize(width: 30, height: 84)
+    static let touch = CGSize(width: 52, height: 100)
+
+    var body: some View {
+        GeometryReader { geo in
+            let room = max(0, geo.size.height - Self.touch.height)
+            let y = min(room, max(0, CGFloat(position) * room + drag))
+            tab
+                .frame(width: Self.touch.width, height: Self.touch.height, alignment: .trailing)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: show)
+                .gesture(DragGesture(minimumDistance: 4)
+                    .onChanged { g in
+                        if abs(g.translation.height) > abs(g.translation.width) { drag = g.translation.height }
+                    }
+                    .onEnded { g in
+                        if -g.translation.width > 24, -g.translation.width > abs(g.translation.height) {
+                            drag = 0
+                            show()
+                        } else {
+                            if room > 0 { position = Double(y / room) }
+                            drag = 0
+                        }
+                    })
+                .offset(x: geo.size.width - Self.touch.width, y: y)
+                .accessibilityElement()
+                .accessibilityLabel("Show the bar")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { show() }
+        }
+        .ignoresSafeArea(.container, edges: .trailing)
+    }
+
+    private var tab: some View {
+        let shape = UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14, style: .continuous)
+        return Image(systemName: "chevron.compact.left")
+            .font(.system(size: 22, weight: .bold))
+            .foregroundStyle(Palette.text)
+            .frame(width: Self.size.width, height: Self.size.height)
+            .background(shape.fill(Palette.bar.opacity(0.78)))
+            .background(shape.fill(.ultraThinMaterial))
+            .overlay(shape.strokeBorder(Color.white.opacity(0.22), lineWidth: 1))
+            .shadow(color: .black.opacity(0.35), radius: 6)
+            .environment(\.colorScheme, .dark)
     }
 }
 

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hold a thumbnail — window lights</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#9BB7FF}a:hover{color:#C3D3FF}
+</style>
+</helmet>
+<div style="width: 874px; height: 402px; position: relative; overflow: hidden; background: #000000; color: #EEF0F3; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif">
+
+  <div style="position: absolute; left: 0; top: 0; width: 874px; height: 78px; background: #16181C"></div>
+  <button aria-label="Hide the bar" style="position: absolute; left: 405px; top: 66px; width: 64px; height: 20px; border: 0; padding: 14px 14px 0 14px; box-sizing: border-box; background: transparent"><span style="display: block; width: 36px; height: 4px; border-radius: 2px; background: rgba(164,171,181,0.55)"></span></button>
+  <div style="position: absolute; left: 76px; top: 10px; width: 64px; height: 58px; border-radius: 14px; background: #23262C" aria-hidden="true"></div>
+  <div style="position: absolute; left: 506px; top: 10px; height: 58px; display: flex; gap: 12px" aria-hidden="true">
+    <span style="width: 64px; border-radius: 14px; background: #23262C"></span><span style="width: 64px; border-radius: 14px; background: #23262C"></span><span style="width: 64px; border-radius: 14px; background: #23262C"></span><span style="width: 64px; border-radius: 14px; background: #23262C"></span>
+  </div>
+  <div style="position: absolute; left: 152px; top: 10px; height: 58px; display: flex; gap: 12px">
+    <button aria-label="Notes window: Groceries, showing now" style="position: relative; width: 92px; height: 58px; border: 0; padding: 0; border-radius: 9px; background: #26282D; outline: 2px solid #9BB7FF; outline-offset: 3px; transform: scale(1.04)"><span style="position: absolute; left: 0; right: 0; top: 0; height: 9px; background: #34373D; border-radius: 9px 9px 0 0"></span><span style="position: absolute; left: -6px; bottom: -6px; width: 22px; height: 22px; border-radius: 6px; background: #F2C94C; color: #000; font: 700 10px/22px -apple-system, system-ui, sans-serif; text-align: center">No</span></button>
+    <span style="width: 92px; border-radius: 9px; background: #26282D" aria-hidden="true"></span>
+    <span style="width: 92px; border-radius: 9px; background: #26282D" aria-hidden="true"></span>
+  </div>
+
+  <div style="position: absolute; left: 70px; top: 86px; width: 734px; height: 287px; border-radius: 12px; background: #1F2126; display: flex; justify-content: center" aria-hidden="true"><div style="width: 459px; height: 287px; background: #FFFFFF"></div></div>
+
+  <div role="group" aria-label="Notes window actions" style="position: absolute; left: 91px; top: 82px; width: 214px; height: 62px; box-sizing: border-box; border-radius: 18px; background: #23262C; border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 6px 32px rgba(0,0,0,0.5); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center">
+    <button style="border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #C4C9D1; font: 10px -apple-system, system-ui, sans-serif"><span style="width: 24px; height: 24px; border-radius: 12px; background: #FF5F57; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4D0000" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"></path></svg></span>Close</button>
+    <button style="border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #C4C9D1; font: 10px -apple-system, system-ui, sans-serif"><span style="width: 24px; height: 24px; border-radius: 12px; background: #FEBC2E; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5A3A00" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"></path></svg></span>Minimize</button>
+    <button style="border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; color: #C4C9D1; font: 10px -apple-system, system-ui, sans-serif"><span style="width: 24px; height: 24px; border-radius: 12px; background: #28C840; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0A3D12" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"></path></svg></span>Full Screen</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":874,"height":402}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

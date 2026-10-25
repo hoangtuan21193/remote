@@ -84,6 +84,12 @@ The clipboard (kind 32; docs/clipboard-plan.md). Each kind 32 received is printe
                      {"stop":true} ends the subscription
   --expect=clipboard=TEXT  (with --expect's other keys, or alone) at exit, the last kind 32's text;
                      clipboard=none: none came
+The Mac's text focus (kind 33; docs/keyboard-auto-plan.md). Each kind 33 received is printed on one line,
+"textfocus at 1.234s: editable=1 tap=1 caret=0.4000,0.5000,0.0020,0.0400", and the window list's
+textFocus= when the host says it:
+  --textfocus        a kind 33 {} right after the select: the subscription (the host reports its focus
+                     after this client's clicks, --tap, and while the caret moves in a text field; a
+                     --synthetic host reads SILL_TEST_TEXT_FOCUS, never Accessibility)
 The remote door (TLS 1.3, both keys pinned; PORT is the remote door's):
   --tls              a session (ALPN sill/1) with this client's identity, pinning the Mac's key saved by
                      an earlier pairing in --identity (or given with --pin)
@@ -132,7 +138,7 @@ with status 2 (--raw17 and --input go out as written). Find PORT with: lsof -nP 
 The --synthetic hosts do not advertise over Bonjour, so this is the only way to reach them."""
 import json, re, socket, struct, sys, time
 
-KIND = {0:"ps",1:"frame",2:"list",3:"thumb",4:"icon",5:"apps",11:"pong",13:"tick",14:"cursor",16:"settings",18:"macinfo",20:"pairresult",22:"goodbye",24:"menu",26:"pointer",32:"clipboard"}
+KIND = {0:"ps",1:"frame",2:"list",3:"thumb",4:"icon",5:"apps",11:"pong",13:"tick",14:"cursor",16:"settings",18:"macinfo",20:"pairresult",22:"goodbye",24:"menu",26:"pointer",32:"clipboard",33:"textfocus"}
 BOOL = {"1": True, "0": False, "true": True, "false": False, "on": True, "off": False, "yes": True, "no": False}
 BOOL_KEYS = {"prioritizeSpeed", "virtualDisplay", "directWireless", "persistent", "virtualDisplayAvailable",
              "thisConnectionAway", "awayRunning"}
@@ -484,7 +490,7 @@ try:
         elif name in VALUED:
             if not body: raise ValueError(f"--{name} needs a value")
             if name in ("big-payload", "flood") and number(body, f"--{name}") < 1: raise ValueError(f"--{name} must be at least 1")
-        elif a not in ("--junk", "--stats", "--tls", "--expect-tls-fail", "--menus", "--pointer", "--no-select", "--pair-ask", "--clipboard",
+        elif a not in ("--junk", "--stats", "--tls", "--expect-tls-fail", "--menus", "--pointer", "--no-select", "--pair-ask", "--clipboard", "--textfocus",
                        "--pair-ask=cable", "--pair-cancel") and not a.startswith(("--fps=", "--expect=")):
             raise ValueError(f"unknown flag {a!r}")
     events.sort(key=lambda e: (e[0], e[1]))
@@ -629,6 +635,9 @@ try:
     if "--clipboard" in flags:
         # The clipboard's subscription (kind 32 {}), as a device whose Share Clipboard is on sends it.
         s.sendall(msg(32, b"{}")); print("  sent clipboard subscription")
+    if "--textfocus" in flags:
+        # The text focus's subscription (kind 33 {}), as a device whose Open Keyboard Automatically is on.
+        s.sendall(msg(33, b"{}")); print("  sent text focus subscription")
 except (OSError, ssl.SSLError) as e:
     print(f"TLS refused: {e}"); sys.exit(0 if expect_tls_fail else 1)
 if big_payload:
@@ -788,7 +797,12 @@ while time.time() - t0 < dur:
         elif kind == 2:
             d = json.loads(payload)
             print(f"  windowList: {len(d.get('windows', []))} windows, active={d.get('active')}"
-                  + (f" clipboard={d['clipboard']}" if "clipboard" in d else ""))
+                  + (f" clipboard={d['clipboard']}" if "clipboard" in d else "")
+                  + (f" textFocus={d['textFocus']}" if "textFocus" in d else ""))
+        elif kind == 33:
+            d = json.loads(payload); c = d.get("caret")
+            print(f"  textfocus at {time.time()-t0:.3f}s: editable={1 if d.get('editable') else 0} tap={1 if d.get('tap') else 0}"
+                  + (f" caret={c['x']:.4f},{c['y']:.4f},{c['w']:.4f},{c['h']:.4f}" if c else " caret=none"))
         elif kind == 32:
             try:
                 d = json.loads(payload)
