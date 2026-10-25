@@ -34,7 +34,7 @@ iOS (`iOSClient/`):
   WindowLightsMenu, TextScaleControl, AppDrawer, LinkLineView).
 - Upright: `PortraitStreamScreen.swift` (halves, KeyRow), `PhonePortraitLayout.swift` (phone rects,
   Larger Picture), `TrackpadView.swift`.
-- Settings panel: `HostSettingsPanel.swift`, `AwayCopy.swift`. Menus: `MacMenuButton.swift`.
+- Settings panel: `HostSettingsPanel.swift`, `AwayCopy.swift`. Menus: `MacMenuButton.swift`; the menu bar strip `MacMenuStrip.swift` (`MenuStripLayout.swift`).
 - Pair This iPad…: `PairingOverlay.swift`. Clipboard chip: `ClipboardChip.swift`.
 - Tour: `TourPolicy.swift` (copy), `TourOverlay.swift`. Duo poses: `DuoPosture.swift`.
 

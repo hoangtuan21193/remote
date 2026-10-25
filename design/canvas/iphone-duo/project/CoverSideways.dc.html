@@ -26,8 +26,18 @@ a{color:#9BB7FF}a:hover{color:#C3D3FF}
     <button aria-label="Settings for Mac Studio" style="flex: none; width: 64px; height: 58px; border: 0; border-radius: 14px; background: #23262C; color: #C4C9D1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: 500 11px -apple-system, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"></path></svg>Settings</button>
   </div>
 
-  <div style="position: absolute; left: 58px; top: 86px; width: 612px; height: 360px; border-radius: 12px; background: #1F2126; border: 1px solid rgba(255,255,255,0.09); box-sizing: border-box; overflow: hidden; display: flex; justify-content: center" role="img" aria-label="The Mac's Notes window, streaming">
-    <div style="width: 576px; height: 360px; background: #FFFFFF; display: flex; flex-direction: column">
+  <div role="menubar" aria-label="Notes menus, the Mac's menu bar" style="position: absolute; left: 0; top: 78px; width: 678px; height: 32px; background: #16181C; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06); font: 500 14px -apple-system, system-ui, sans-serif">
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 58px; top: 3px; width: 61px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 700 14px -apple-system, system-ui, sans-serif">Notes</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 119px; top: 3px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">File</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 169px; top: 3px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Edit</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 219px; top: 3px; width: 66px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Format</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 285px; top: 3px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">View</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 335px; top: 3px; width: 66px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Window</button>
+    <button role="menuitem" aria-haspopup="menu" style="position: absolute; left: 401px; top: 3px; width: 50px; height: 26px; border: 0; padding: 0; border-radius: 6px; background: transparent; color: #EEF0F3; font: 500 14px -apple-system, system-ui, sans-serif">Help</button>
+  </div>
+
+  <div style="position: absolute; left: 58px; top: 118px; width: 612px; height: 328px; border-radius: 12px; background: #1F2126; border: 1px solid rgba(255,255,255,0.09); box-sizing: border-box; overflow: hidden; display: flex; justify-content: center" role="img" aria-label="The Mac's Notes window, streaming">
+    <div style="width: 576px; height: 328px; background: #FFFFFF; display: flex; flex-direction: column">
       <div style="height: 24px; background: #ECECEC"></div>
       <div style="padding: 14px; font-size: 12px; line-height: 18px; color: #222"><b style="font-size: 14px">Groceries</b><br>Eggs<br>Coffee beans<br>Lemons</div>
     </div>
