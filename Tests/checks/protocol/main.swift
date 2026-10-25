@@ -371,6 +371,18 @@ check("kind 32 is the clipboard, 33 the text focus; 29, 30, 31 and 34 unknown (s
       header(32)?.kind == .clipboard && header(33)?.kind == .textFocus
       && [29, 30, 31, 34].allSatisfy { header(UInt8($0))?.kind == .unknown })
 check("kinds 16 and 17 unchanged", header(16)?.kind == .hostSettings && header(17)?.kind == .changeSettings)
+// The Desktop's text size rides on kinds 9 and 2 (no kind of its own): a viewport's `desktop` and the
+// window list's `desktopScale`, both left out when nil, so an older peer's bytes are unchanged.
+let vpOld = Wire.decode(Viewport.self, from: Data(#"{"width":1366,"height":1024,"scale":1.2,"fps":120}"#.utf8))
+check("kind 9: an older device's viewport decodes, desktop nil", vpOld?.desktop == nil && vpOld?.scale == 1.2)
+let vpDesk = Viewport(width: 1366, height: 1024, scale: 0.8, desktop: true)
+check("kind 9: desktop true round-trips, and nil is left out",
+      Wire.decode(Viewport.self, from: Wire.encode(vpDesk))?.desktop == true
+      && !String(decoding: Wire.encode(Viewport(width: 1, height: 1, scale: nil)), as: UTF8.self).contains("desktop"))
+let wlScale = WindowList(macName: "M", windows: [], active: .desktop, desktopScale: 1)
+check("kind 2: desktopScale round-trips at 1, and nil is left out",
+      Wire.decode(WindowList.self, from: Wire.encode(wlScale))?.desktopScale == 1
+      && !String(decoding: Wire.encode(WindowList(macName: "M", windows: [], active: .none)), as: UTF8.self).contains("desktopScale"))
 check("caps: 1 MiB client, 4 KiB pairing, 32 MiB frames, 4 MiB other",
       StreamMessage.maxClientPayload == 1_048_576 && StreamMessage.maxPairingPayload == 4096
       && StreamMessage.maxFramePayload == 33_554_432 && StreamMessage.maxOtherHostPayload == 4_194_304)

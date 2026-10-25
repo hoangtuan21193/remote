@@ -24,6 +24,34 @@
       "h": 669,
       "title": "Open flat, sideways"
     },
+    "Switcher.dc.html": {
+      "x": 2062,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Book pose — app switcher (three-finger swipe)"
+    },
+    "DesktopText.dc.html": {
+      "x": 3093,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Book pose — Desktop, text size"
+    },
+    "KeyboardBook.dc.html": {
+      "x": 4124,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Book pose — keyboard up"
+    },
+    "MenuStripOpen.dc.html": {
+      "x": 5155,
+      "y": 0,
+      "w": 951,
+      "h": 669,
+      "title": "Book pose — a Mac menu open from the menu bar"
+    },
     "Laptop.dc.html": {
       "x": 0,
       "y": 1069,
@@ -58,41 +86,13 @@
       "w": 678,
       "h": 466,
       "title": "Cover — on its side"
-    },
-    "BarFolded.dc.html": {
-      "x": 2062,
-      "y": 0,
-      "w": 951,
-      "h": 669,
-      "title": "Book pose — bar hidden"
-    },
-    "BarPeek.dc.html": {
-      "x": 3093,
-      "y": 0,
-      "w": 951,
-      "h": 669,
-      "title": "Book pose — hidden bar brought down"
-    },
-    "KeyboardBook.dc.html": {
-      "x": 4124,
-      "y": 0,
-      "w": 951,
-      "h": 669,
-      "title": "Book pose — keyboard up"
-    },
-    "MenuStripOpen.dc.html": {
-      "x": 5155,
-      "y": 0,
-      "w": 951,
-      "h": 669,
-      "title": "Book pose — a Mac menu open from the menu bar"
     }
   },
   "order": [
     "Main.dc.html",
     "FlatLandscape.dc.html",
-    "BarFolded.dc.html",
-    "BarPeek.dc.html",
+    "Switcher.dc.html",
+    "DesktopText.dc.html",
     "KeyboardBook.dc.html",
     "MenuStripOpen.dc.html",
     "Laptop.dc.html",

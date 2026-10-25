@@ -205,6 +205,37 @@ check(Wire.decode(TextFocus.self, from: Data(#"{"editable":false,"later":1}"#.ut
 let focusMessage = StreamMessage(kind: .textFocus, timestamp: 1, isKeyframe: false, payload: Wire.encode(focus)).serialized()
 check(StreamMessage.parseHeader(focusMessage)?.kind == .textFocus, "the text focus's header parses")
 
+// The Desktop's text size: a viewport's `desktop` from a device and the window list's `desktopScale`
+// from a host, additive both ways. An older peer's JSON decodes here with both nil, and an older
+// decoder (the two structs as they were before, below) reads the new JSON, skipping the keys.
+let scales = WindowList(macName: "Mac mini", windows: [], active: .desktop, launchID: "L", hostVersion: "0.8", protocol: 1,
+                        gestures: TrackpadGesture.generation, clipboard: ClipboardPolicy.generation,
+                        textFocus: TextFocusPolicy.generation, desktopScale: 1)
+check(json(scales).contains(#""desktopScale":1"#), "a list from a host that takes the Desktop's text size says desktopScale 1: \(json(scales))")
+check(!json(focuses).contains("desktopScale") && decodedOld?.desktopScale == nil, "a list without it leaves the key out; an older host's decodes, desktopScale nil")
+check(Wire.decode(WindowList.self, from: Wire.encode(scales)).map { $0.desktopScale == 1 && $0.textFocus == 1 } == true,
+      "desktopScale round-trips beside textFocus")
+let desktopViewport = Viewport(width: 852, height: 393, scale: 1.25, fps: 120, desktop: true)
+check(json(desktopViewport) == #"{"desktop":true,"fps":120,"height":393,"scale":1.25,"width":852}"#, "a viewport for the Desktop: \(json(desktopViewport))")
+check(json(Viewport(width: 852, height: 393, scale: 1.25, fps: 120)) == #"{"fps":120,"height":393,"scale":1.25,"width":852}"#,
+      "a viewport without it is byte for byte an older device's: no desktop key")
+check(Wire.decode(Viewport.self, from: Wire.encode(desktopViewport)) == desktopViewport, "desktop round-trips")
+let olderViewport = #"{"width":1133,"height":744,"scale":1,"localCursor":true,"fps":60}"#
+check(Wire.decode(Viewport.self, from: Data(olderViewport.utf8)).map { $0.desktop == nil && $0.scale == 1 && $0.fps == 60 && $0.localCursor == true } == true,
+      "an older device's viewport decodes, desktop nil")
+check(Wire.decode(Viewport.self, from: Data(#"{"width":1,"height":1,"desktop":false}"#.utf8)).map { $0.desktop == false && $0.scale == nil } == true,
+      "desktop false decodes as false, scale nil")
+check(Wire.decode(Viewport.self, from: Data(#"{"width":1,"height":1,"desktop":1}"#.utf8)) == nil, "a number as desktop does not decode")
+struct OlderViewport: Codable, Equatable { var width: Double; var height: Double; var scale: Double?; var localCursor: Bool?; var fps: Int? }
+check(Wire.decode(OlderViewport.self, from: Wire.encode(desktopViewport)) == OlderViewport(width: 852, height: 393, scale: 1.25, localCursor: nil, fps: 120),
+      "an older host reads a viewport for the Desktop as the same viewport, desktop skipped")
+struct OlderWindowList: Codable {
+    var macName: String; var windows: [WindowInfo]; var active: StreamSource; var launchID: String?
+    var hostVersion: String?; var `protocol`: Int?; var gestures: Int?; var clipboard: Int?; var textFocus: Int?
+}
+check(Wire.decode(OlderWindowList.self, from: Wire.encode(scales)).map { $0.macName == "Mac mini" && $0.active == .desktop && $0.textFocus == 1 } == true,
+      "an older device reads a list with desktopScale, the key skipped")
+
 // For H4: what cb0ec55's StreamProtocol must read.
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : nil
 if let out {
@@ -219,6 +250,8 @@ if let out {
         "clipboardMessage": clipboardMessage.base64EncodedString(),
         "windowListTextFocus": String(decoding: Wire.encode(focuses), as: UTF8.self),
         "textFocusMessage": focusMessage.base64EncodedString(),
+        "windowListDesktopScale": String(decoding: Wire.encode(scales), as: UTF8.self),
+        "viewportDesktop": String(decoding: Wire.encode(desktopViewport), as: UTF8.self),
     ]
     try! JSONSerialization.data(withJSONObject: payloads, options: [.sortedKeys, .prettyPrinted]).write(to: URL(fileURLWithPath: out))
 }

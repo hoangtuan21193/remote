@@ -80,6 +80,20 @@
       "h": 874,
       "title": "First-run tour — touch card"
     },
+    "KeyboardUpright.dc.html": {
+      "x": 2410,
+      "y": 1274,
+      "w": 402,
+      "h": 874,
+      "title": "Stream — upright, keyboard up"
+    },
+    "WindowLights.dc.html": {
+      "x": 2892,
+      "y": 1274,
+      "w": 402,
+      "h": 874,
+      "title": "Hold a thumbnail — window lights"
+    },
     "StreamSideways.dc.html": {
       "x": 0,
       "y": 2548,
@@ -87,12 +101,12 @@
       "h": 402,
       "title": "Stream — on its side"
     },
-    "WindowLights.dc.html": {
+    "Switcher.dc.html": {
       "x": 954,
       "y": 2548,
       "w": 874,
       "h": 402,
-      "title": "Hold a thumbnail — window lights"
+      "title": "Stream — app switcher (three-finger swipe)"
     },
     "TextSize.dc.html": {
       "x": 1908,
@@ -101,29 +115,8 @@
       "h": 402,
       "title": "Aa — text size ruler"
     },
-    "BarFolded.dc.html": {
-      "x": 2862,
-      "y": 2548,
-      "w": 874,
-      "h": 402,
-      "title": "Stream — bar hidden"
-    },
-    "BarPeek.dc.html": {
-      "x": 3816,
-      "y": 2548,
-      "w": 874,
-      "h": 402,
-      "title": "Stream — hidden bar brought down"
-    },
-    "KeyboardUpright.dc.html": {
-      "x": 2410,
-      "y": 1274,
-      "w": 402,
-      "h": 874,
-      "title": "Stream — upright, keyboard up"
-    },
     "KeyboardSideways.dc.html": {
-      "x": 4770,
+      "x": 2862,
       "y": 2548,
       "w": 874,
       "h": 402,
@@ -142,11 +135,10 @@
     "SettingsPanel.dc.html",
     "TourCard.dc.html",
     "KeyboardUpright.dc.html",
-    "StreamSideways.dc.html",
     "WindowLights.dc.html",
+    "StreamSideways.dc.html",
+    "Switcher.dc.html",
     "TextSize.dc.html",
-    "BarFolded.dc.html",
-    "BarPeek.dc.html",
     "KeyboardSideways.dc.html"
   ],
   "notes": {
@@ -162,14 +154,14 @@
       "y": 974,
       "text": "Streaming, held upright",
       "kind": "title1",
-      "maxW": 2812
+      "maxW": 3294
     },
     "t3": {
       "x": 0,
       "y": 2248,
       "text": "Streaming, on its side",
       "kind": "title1",
-      "maxW": 5644
+      "maxW": 3736
     }
   },
   "designSystems": []

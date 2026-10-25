@@ -152,6 +152,14 @@ The full Layout and Build-and-run reference that used to live in CLAUDE.md (move
   `Tests/checks/virtual-display-api`, which also runs `Runtime.method`'s decision
   and the `applySettings:` call, through `methodProblem` and `applySettings(_:to:)`,
   on classes it makes at run time),
+  `DesktopScalePolicy` (pure, `Tests/checks/desktop-scale`: which of the
+  display's own scaled modes a device's Aa on the Desktop asks for, relative to
+  today's look, same shape, HiDPI kept; when the display goes back) and
+  `DisplayResolution` (`DisplayModes`, the CG calls, `.forAppOnly`;
+  `DesktopScaler`, main actor: changes the Desktop's display inside `select`,
+  restores it when the Desktop stops, the last asking device leaves or the host
+  quits, and at launch after a crash from the `desktopScaleOriginalMode` note;
+  TEST ONLY `SILL_TEST_DESKTOP_MODES` on a synthetic host),
   `VirtualStage` (`--virtual-display`: owns the display and the moved window,
   geometry, prepare/release, emergency restore), `HostShutdown` (signal
   sources + atexit, installed only with the flag in the CLI, always in the app;
@@ -563,12 +571,16 @@ The full Layout and Build-and-run reference that used to live in CLAUDE.md (move
   two or more; from each scene's `WindowSessionObserver`; asks for a rebuild)
   and `MacMenuButton` (the bars' Menus button: the bar's look, and
   `MacMenuTrigger`'s clear UIButton with the pull-down over it; `fits`, where
-  a bar holds it and still a whole thumbnail), and `MacMenuStrip` (the Mac's
-  menu bar as a 32 pt strip of titles under the landscape bar, at the top
-  edge 8 pt lower while the bar is hidden; each title a pull-down of its one
-  deferred element; Settings › Mac Menu Bar, `Sill.macMenuStrip`, on by
-  default) over `MenuStripLayout` (pure, `Tests/checks/menu-strip`: where
-  each title goes, off the fold, clear of the stashed tab, » for the rest).
+  a bar holds it and still a whole thumbnail; upright only), and `MacMenuStrip`
+  (held sideways the one bar: the Mac's menu titles in a 32 pt strip at the top,
+  8 pt lower with no status bar above it, each a pull-down of its one deferred
+  element, then `StripButton`s Apps, Keyboard, Aa and Settings; always there)
+  over `MenuStripLayout` (pure, `Tests/checks/menu-strip`: where each title
+  goes, off the fold, » for the rest). `AppSwitcher` over `AppSwitcherPolicy`
+  (pure, `Tests/checks/app-switcher`): the ⌘Tab-like row a three-finger swipe
+  left or right opens (`TrackpadGestures.route`, `StreamClient.switcherSwipe`),
+  the Desktop then the apps, most recently used here first; chosen after a
+  0.6 s pause or a tap. Four fingers left or right are the Mac's Spaces.
   `PointerPresence` (the rules of the one pointer sprite: the Mac's
   arrow while the Mac or another device moved it last, this device's own only
   for the portrait trackpad; a kind 26's freshness; the network queue's feed
@@ -760,6 +772,7 @@ SILL_TEST_LOOPBACK=1 SILL_TEST_HOTKEYS='108=off,173=off' .build/release/SillHost
 swift run -c release SillHost --no-clipboard  # share nothing of the clipboard with devices (on by default, as in Sill.app)
 SILL_TEST_LOOPBACK=1 SILL_TEST_SOFTWARE_ENCODER=1 SILL_TEST_NO_ROUTER=1 SILL_TEST_PASTEBOARD=me.saffer.sill.test.x SILL_TEST_CLIPBOARD_LOG=1 .build/release/SillHost --synthetic   # the clipboard on a pasteboard of its own (never this Mac's), each decision printed with sizes
 python3 Scripts/sillclient.py PORT 6 none --clipboard --copy=hello@2 --expect=clipboard=none   # subscribe, send text as a device's Paste does; each kind 32 printed
+SILL_TEST_LOOPBACK=1 SILL_TEST_SOFTWARE_ENCODER=1 SILL_TEST_NO_ROUTER=1 SILL_TEST_DESKTOP_MODES=1512x982*,1147x745,1352x878,1800x1169,2056x1329 .build/release/SillHost --synthetic   # TEST ONLY: the Desktop's display modes (WxH[@S][*], * the current one); Aa on the Desktop logs the mode it would take, never sets a real display
 echo field > $T/focus; SILL_TEST_LOOPBACK=1 SILL_TEST_SOFTWARE_ENCODER=1 SILL_TEST_NO_ROUTER=1 SILL_TEST_TEXT_FOCUS=$T/focus .build/release/SillHost --synthetic   # TEST ONLY: the text focus read from the file at each look (field, none, or x,y,w,h), never Accessibility
 python3 Scripts/sillclient.py PORT 8 desktop --textfocus --tap=0.4,0.5@2   # subscribe to kind 33 and click; each report printed ("textfocus at 2.153s: editable=1 tap=1 caret=…")
 SILL_TOUCHRIG_SIM='Sill touchrig' Tests/touchrig/run.sh new && Tests/touchrig/run.sh --rev origin/main base && Tests/touchrig/compare.py .build/touchrig/base.log .build/touchrig/new.log   # the surfaces under synthesized touches
@@ -954,10 +967,9 @@ another; the first guesses, `1000x710` / `710x1000` / `500x710` / `710x500`,
 have none), `-SillHinge
 closed|half|flat` (the hinge and a 40 pt fold across the middle of the longer
 side; without it the harness knows no hinge, even on the Duo's simulator),
-`-SillLive 1` (real client inside the frame), `-SillDrawer 1`, `-Sill.macMenuStrip NO` (the
-Mac menu bar strip off for that launch), `-SillBarHidden YES` (the
-landscape bar stashed in a tab on the trailing edge, as a PiP window; NO unfolds; read through @AppStorage, so it wins over a tap
-for that launch),
+`-SillLive 1` (real client inside the frame), `-SillDrawer 1`, `-SillSwipe3 L@3,L@3.4,R@5`
+(a three-finger swipe left or right at each second after the screen appears: the app switcher; the
+simulator has no three-finger touch),
 `-SillActive none|desktop|<windowID>` (mock), `-SillHUD 1` (diagnostics overlay),
 `-SillSettings 1` (the Settings panel open), `-SillMacMenu
 code|blender|long|stale|noaccess|none|slow|timeout|refuse` (the mock Mac's

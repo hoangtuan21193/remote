@@ -262,6 +262,12 @@ package final class StreamCoordinator {
     /// The Mac's text focus (kind 33, HostTextFocus; docs/keyboard-auto-plan.md), for the devices that
     /// subscribed: after their clicks, and while the caret moves in a text field.
     let textFocus: HostTextFocus
+    /// The Desktop's text size (DesktopScaler, DesktopScalePolicy): a device's viewport with `desktop`
+    /// true picks one of the Desktop display's own modes while the Desktop streams; the display goes
+    /// back to its own mode when the Desktop stops streaming, the devices that asked take it back or
+    /// leave, or the host stops. Changed only between pipelines (`select`). A synthetic host changes
+    /// no display (TEST ONLY SILL_TEST_DESKTOP_MODES gives a test host a stand-in).
+    let desktopScale: DesktopScaler
     /// TEST ONLY. `SILL_TEST_MENU_PID=<pid>` on a --synthetic host: the test pattern's menus are that
     /// process's (the gates' fixture, Scripts/menufixture.swift), read and pressed through the same
     /// code, never activated (the Desktop's rule). Nil otherwise; `testMenuLine` is what `start`
@@ -325,6 +331,7 @@ package final class StreamCoordinator {
         clipboard = HostClipboard(server: server, enabled: config.shareClipboard, launchID: launch, synthetic: synthetic)
         // A synthetic host reads no Accessibility either: its stand-in is TEST ONLY SILL_TEST_TEXT_FOCUS.
         textFocus = HostTextFocus(server: server, synthetic: synthetic)
+        desktopScale = DesktopScaler(synthetic: synthetic, testHost: server.isTestHost)
         let hook = Self.testMenuHook(synthetic: synthetic)
         testMenuPID = hook.pid
         testMenuLine = hook.line
@@ -407,6 +414,7 @@ package final class StreamCoordinator {
                 self.menus.clientLeft(connection)
                 self.clipboard.clientLeft(connection)
                 self.textFocus.clientLeft(connection)
+                self.desktopScale.left(id)
                 self.releaseKeys(of: id)
                 self.status.update { $0.devices.removeAll { $0.id == id } }
                 // The last device at home left devices away behind: the away quality, at once.
@@ -415,6 +423,11 @@ package final class StreamCoordinator {
                 // the flip too (select's commit), so a device that leaves costs one.
                 if self.active != .none, self.catalog.clientCount > 1, self.effectiveFPS != self.fps {
                     await self.select(self.active)
+                } else if self.active == .desktop, !self.connections.isEmpty,
+                          self.desktopScale.wantsChange(desktop: self.catalog.display?.displayID, desktopStreams: true) {
+                    // The device whose text size the Desktop followed left: the one that asked before
+                    // it, or the display's own mode, in one restart (which takes a flip too).
+                    if self.switching { self.viewportArrivedWhileSwitching = true } else { await self.select(.desktop) }
                 } else if flipped {
                     await self.applyPending()
                 }
@@ -581,6 +594,10 @@ package final class StreamCoordinator {
         for line in testHookLines { print(line) }
         if let line = clipboard.testHookLine { print(line) }   // TEST ONLY, and only with one of its variables set
         if let line = textFocus.testHookLine { print(line) }   // TEST ONLY, the same
+        if let line = desktopScale.testHookLine { print(line) }   // TEST ONLY, the same
+        // An earlier run that ended with the display in a mode it set (a crash): back to its own
+        // mode, before anything streams. Nothing to do, and nothing printed, without its note.
+        desktopScale.recoverAtLaunch()
         textFocus.sourceRect = { [weak self] in self?.currentSourceRect() }
         if !synthetic, promptForPermissions { InputInjector.ensureAccessibility() }   // prompts once; input is dropped silently without it
         if softwareOnly {
@@ -962,6 +979,8 @@ package final class StreamCoordinator {
             viewport = v
             let id = ObjectIdentifier(connection)
             clientFPS[id] = v.fps ?? 60
+            // The Desktop's text size: `desktop` true asks for it, anything else takes it back.
+            desktopScale.viewport(from: id, desktop: v.desktop, scale: v.scale, panel: CGSize(width: v.width, height: v.height))
             // The flip its connection made waited for this, its rate (`flipAwaits`): the restart the
             // rate needs takes the flip too, and the flip alone restarts once when the rate needs none.
             let flipWaited = flipWait == id
@@ -1145,11 +1164,16 @@ package final class StreamCoordinator {
     /// A new viewport while a window streams. The encoder is fixed to the old size, but the
     /// catalog's resize check (`windowsChanged`) already restarts the pipeline when the window's
     /// size changes; refreshing now just saves waiting up to two seconds for its next poll.
-    /// The desktop and nothing-streaming ignore viewports.
+    /// The Desktop takes a viewport only for its text size (DesktopScaler): a restart when the display's
+    /// mode changes, which `select` makes between pipelines. Nothing streaming ignores viewports.
     private func applyViewportToActiveWindow() async {
         // A different rate (a ProMotion device joined, Low Power Mode toggled) needs a new capture
         // interval and encoder session: one restart, whatever the source.
         if active != .none, effectiveFPS != fps { await select(active); return }
+        if active == .desktop {
+            if desktopScale.wantsChange(desktop: catalog.display?.displayID, desktopStreams: true) { await select(.desktop) }
+            return
+        }
         if virtualDisplay, stage.isStaged, case .window(let id) = active {
             // One restart: prepare re-places the window on the same display (the display is only
             // recreated if the envelope grew). The client's identical re-send after a switch is a
@@ -1329,6 +1353,9 @@ package final class StreamCoordinator {
         // frame (WindowRestore, issue #57): another window or the Desktop picked, `.none` when the
         // last device leaves or the stream stops. A restart of the same window keeps it fitted.
         if case .window(let next) = source { restoreFits(keeping: next) } else { restoreFits(keeping: nil) }
+        // The Desktop's text size: the display's mode for what streams next, with nothing capturing it.
+        // The Desktop gets the mode its devices asked for, anything else the display's own.
+        await reconcileDesktopMode(desktopNext: source == .desktop)
 
         var filter: SCContentFilter?     // nil only for the synthetic test pattern
         var sourceRect: CGRect? = nil    // set only when the window streams from the virtual display
@@ -1459,6 +1486,20 @@ package final class StreamCoordinator {
         }
         broadcastList()
         // Mid-switch requests (a viewport, the last client leaving) are applied by the defer.
+    }
+
+    /// Sets the Desktop display's mode for the next pipeline (DesktopScaler.reconcile) and, when it
+    /// changed on a real host, waits up to a second for ScreenCaptureKit to report the new size, which
+    /// the Desktop's pipeline is sized from and input is mapped onto.
+    private func reconcileDesktopMode(desktopNext: Bool) async {
+        guard let mode = desktopScale.reconcile(desktop: catalog.display?.displayID, desktopStreams: desktopNext, stopping: shuttingDown),
+              !synthetic else { return }
+        for _ in 0..<10 {
+            await catalog.refreshWindows()
+            if let d = catalog.display, d.width == mode.width, d.height == mode.height { return }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        print("Desktop text size: ScreenCaptureKit still reports \(catalog.display.map { "\($0.width)×\($0.height) pt" } ?? "no display") after a second; streaming that.")
     }
 
     /// Encoder, then capture (ScreenCaptureKit for a filter, the test pattern without one), then
@@ -1897,25 +1938,29 @@ package final class StreamCoordinator {
     /// before AppKit exits): every key and button a device holds down on the Mac goes up (a modifier
     /// left down would outlive Sill: the Mac's next click a ⌘-click), every connected device hears why
     /// (kind 22 "quit", at most 0.1 s), then a window Sill sized goes back to its own frame
-    /// (`restoreFits`), the staged window home, display gone. Capture and encoder need no stop; the
+    /// (`restoreFits`), the staged window home, display gone, and the Desktop's display back to its own
+    /// mode if a device's text size changed it (DesktopScaler). Capture and encoder need no stop; the
     /// process is about to end. The CLI without --virtual-display lets go of the keys, puts a sized
-    /// window back and dies of the signal with no goodbye (`releaseKeysForExit`): its devices notice
-    /// by liveness.
+    /// window and the display's mode back and dies of the signal with no goodbye
+    /// (`releaseKeysForExit`): its devices notice by liveness.
     package func shutdownForExit() {
         injector.releaseAll()
         server.goodbyeAll(Goodbye(reason: Goodbye.quit), within: 0.1)
         shuttingDown = true
         restoreFits(keeping: nil)
         stage.release()
+        desktopScale.restoreForExit()
     }
 
     /// The CLI's default path at a signal (HostShutdown.installKeyRelease), just before it dies of it:
     /// every key and button a device holds down on the Mac goes up, and a window Sill sized for a
-    /// device goes back to its own frame (a line each, only when a window was sized); nothing else
+    /// device goes back to its own frame (a line each, only when a window was sized), and the Desktop's
+    /// display to its own mode (a line only when a device's text size changed it); nothing else
     /// happens (no goodbye), as before.
     package func releaseKeysForExit() {
         injector.releaseAll()
         restoreFits(keeping: nil)
+        desktopScale.restoreForExit()      // a line only when a device's text size had changed the display
     }
 
     // MARK: A window Sill sized goes back (WindowRestore, issue #57)
@@ -2336,7 +2381,7 @@ package final class StreamCoordinator {
                       payload: Wire.encode(WindowList(macName: macName, windows: catalog.infos, active: active, launchID: launchID,
                                                       hostVersion: hostVersion, protocol: SillProtocol.current,
                                                       gestures: TrackpadGesture.generation, clipboard: clipboard.advertised,
-                                                      textFocus: textFocus.advertised)))
+                                                      textFocus: textFocus.advertised, desktopScale: desktopScale.advertised)))
     }
 
     private func broadcastList() { server.broadcast(listMessage()) }

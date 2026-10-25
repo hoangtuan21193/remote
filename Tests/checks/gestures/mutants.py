@@ -73,6 +73,12 @@ _i = orig.find(SILENCE); _j = orig.find(ARMED) + len(ARMED)
 _span = orig[_i:_j] if _i >= 0 and _j > _i else "M33 pattern missing"
 MUTANTS["M33 silent only once armed (the review's F1)"] = (
     _span, _span.replace(SILENCE, "").replace(ARMED, "            if !silent { silent = true; output = .silenced }\n" + ARMED))
+# Where a decided gesture goes (.planboard/strip-gestures D2, D4).
+MUTANTS["R1 four fingers up to the Mac"] = ("if fingers >= 4 { return sideways ? .mac : .nothing }", "if fingers >= 4 { return .mac }")
+MUTANTS["R2 three fingers left or right to the Mac"] = ("return sideways ? .switcher(forward: gesture == .swipeLeft) : .mac", "return .mac")
+MUTANTS["R3 the switcher's direction turned round"] = ("return sideways ? .switcher(forward: gesture == .swipeLeft) : .mac", "return sideways ? .switcher(forward: gesture == .swipeRight) : .mac")
+MUTANTS["R4 four fingers sideways to the switcher"] = ("if fingers >= 4 { return sideways ? .mac : .nothing }", "if fingers > 4 { return sideways ? .mac : .nothing }")
+MUTANTS["R5 a pinch counted sideways"] = ("let sideways = gesture == .swipeLeft || gesture == .swipeRight", "let sideways = gesture != .swipeUp && gesture != .swipeDown")
 caught = 0
 for name, (old, new) in MUTANTS.items():
     if orig.count(old) != 1:

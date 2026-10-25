@@ -9,7 +9,7 @@ MUTANTS = [
     # The wire.
     ("kind 33 as 34", "StreamMessage.swift", "case textFocus = 33", "case textFocus = 34"),
     ("the list's textFocus never stored", "Switcher.swift", "self.textFocus = textFocus", "self.textFocus = nil"),
-    ("textFocus 1 by default", "Switcher.swift", "                textFocus: Int? = nil) {", "                textFocus: Int? = 1) {"),
+    ("textFocus 1 by default", "Switcher.swift", "                textFocus: Int? = nil,\n", "                textFocus: Int? = 1,\n"),
     ("stop false by default (a subscription is no longer {})", P, "tap: Bool? = nil, stop: Bool? = nil) {", "tap: Bool? = nil, stop: Bool? = false) {"),
     ("generation 2", P, "public static let generation = 1", "public static let generation = 2"),
     ("the subscription says stop", P, "public static var subscription: Data { Wire.encode(TextFocus()) }", "public static var subscription: Data { Wire.encode(TextFocus(stop: true)) }"),

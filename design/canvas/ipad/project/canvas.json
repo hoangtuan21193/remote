@@ -43,7 +43,7 @@
       "y": 1144,
       "w": 1133,
       "h": 744,
-      "title": "Menus pull-down"
+      "title": "Menu open from the menu bar"
     },
     "PairingOverlay.dc.html": {
       "x": 1213,
@@ -80,35 +80,35 @@
       "h": 1133,
       "title": "Add a Mac — upright"
     },
-    "BarFolded.dc.html": {
+    "KeyboardLandscape.dc.html": {
       "x": 4852,
       "y": 0,
       "w": 1133,
       "h": 744,
-      "title": "Stream — bar hidden"
+      "title": "Stream — landscape, keyboard up"
     },
-    "BarPeek.dc.html": {
+    "Switcher.dc.html": {
       "x": 6065,
       "y": 0,
       "w": 1133,
       "h": 744,
-      "title": "Stream — hidden bar brought down"
+      "title": "Stream — app switcher (three-finger swipe)"
     },
-    "KeyboardLandscape.dc.html": {
+    "DesktopText.dc.html": {
       "x": 7278,
       "y": 0,
       "w": 1133,
       "h": 744,
-      "title": "Stream — landscape, keyboard up"
+      "title": "Stream — Desktop, text size"
     }
   },
   "order": [
     "Main.dc.html",
     "StreamLandscape.dc.html",
+    "Switcher.dc.html",
+    "DesktopText.dc.html",
     "AppsDrawer.dc.html",
     "SettingsPanel.dc.html",
-    "BarFolded.dc.html",
-    "BarPeek.dc.html",
     "KeyboardLandscape.dc.html",
     "MenusPulldown.dc.html",
     "PairingOverlay.dc.html",

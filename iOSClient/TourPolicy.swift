@@ -203,6 +203,9 @@ enum TourPolicy {
     static func targets(_ topic: TourTopic, _ layout: TourLayout, thumbnails: Bool = true) -> [TourTarget] {
         switch topic {
         case .touch: return [.stream]
+        // Held sideways the menu bar is the one bar: Apps, Keyboard and Aa at its end, and no
+        // thumbnails (windows change with a three-finger swipe; .planboard/strip-gestures D1).
+        case .bar where layout == .landscape: return [.apps, .textSize, .keyboard]
         case .bar where layout == .phone && !thumbnails: return [.apps, .textSize, .keyboard]
         case .bar: return layout == .portrait ? [.strip, .textSize] : [.strip, .textSize, .keyboard]
         case .settings: return [.settings]
@@ -523,7 +526,7 @@ enum TourPolicy {
             if iPad { rows.append(row("applepencil", [strong("Apple Pencil"), plain(" works as a mouse.")])) }
             let hint: String
             switch layout {
-            case .landscape: hint = "The picture of \(mac) fills the screen below the bar."
+            case .landscape: hint = "The picture of \(mac) fills the screen below the menu bar."
             case .portrait: hint = "The picture of \(mac) fills the top half of the screen."
             case .phone: hint = "The picture of \(mac) is at the top of the screen."
             }
@@ -541,6 +544,15 @@ enum TourPolicy {
             }
             // A phone with Larger Picture has no thumbnails: windows come from Apps, which shows an
             // open app's next window when it is chosen again (AppDrawer).
+            // Sideways no thumbnails either: a three-finger swipe switches apps, four fingers the
+            // Spaces (.planboard/strip-gestures D2, D4), and Aa is the Desktop's too.
+            if layout == .landscape {
+                rows = voiceOver
+                    ? [row("magnifyingglass", [strong("Apps"), plain(" lists the apps on \(mac). Choose an open one again for its next window.")]),
+                       row("textformat.size", [strong("Text size"), plain(" makes text on \(mac) larger or smaller. Swipe up or down on it.")])]
+                    : [row("hand.draw", [strong("Swipe three fingers"), plain(" left or right to switch apps; four fingers switch Spaces.")]),
+                       row("textformat.size", [strong("Aa"), plain(": touch it and slide to make text on \(mac) larger or smaller.")])]
+            }
             if layout == .phone && !thumbnails {
                 rows[0] = voiceOver
                     ? row("magnifyingglass", [strong("Apps"), plain(" lists the apps on \(mac). Choose an open one again for its next window.")])
@@ -551,7 +563,7 @@ enum TourPolicy {
             if layout != .portrait { rows.append(keyboardRow) }
             let hint: String
             switch layout {
-            case .landscape: hint = "In the bar at the top, after Apps."
+            case .landscape: hint = "In the menu bar at the top, after the menus of \(mac)."
             case .portrait: hint = "In the bar below the picture, after Apps."
             case .phone where !thumbnails: hint = "Under the picture, in the row of buttons: Apps, Aa and Keyboard."
             case .phone: hint = "Under the picture: Aa and Keyboard in the first row, the windows in the second."
@@ -565,7 +577,8 @@ enum TourPolicy {
                 rows.append(row(iPad ? "ipad" : "iphone", [strong(turn), plain(" for a trackpad and keys.")]))
             }
             return TourCopy(title: "Settings", subtitle: nil, rows: rows,
-                            hint: layout == .phone ? "The last button in the row under the picture." : "The last button in the bar.")
+                            hint: layout == .phone ? "The last button in the row under the picture."
+                                : layout == .landscape ? "The last button in the menu bar." : "The last button in the bar.")
         case .laptop:
             var rows: [TourRow]
             if voiceOver {

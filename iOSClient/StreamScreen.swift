@@ -119,6 +119,10 @@ struct StreamScreen: View {
     /// been asked to fit (the control shows 1× for it). Up here, like `latched`, so it survives
     /// rotation and both layouts share it.
     @State private var textScale: Double? = nil
+    /// The Desktop's own Aa value (.planboard/strip-gestures D5): a Mac that changes its display's
+    /// resolution for it gets this while the Desktop streams, so a window's text size never changes
+    /// the Mac's resolution on the way to the Desktop. nil: the display's own mode.
+    @State private var desktopTextScale: Double? = nil
     /// The Aa slider is unfolded (finger down): the bars fade their other buttons meanwhile.
     @State private var scaleOpen = false
     /// The thumbnail whose traffic-light submenu is open (held for 1.5 s). The bars clip their
@@ -179,19 +183,11 @@ struct StreamScreen: View {
     /// This device's Larger Picture switch (the Settings panel's This iPhone; docs/larger-picture-plan.md).
     /// It acts only while a window streams (`largerPictureNow`).
     @AppStorage(StreamClient.largerPictureKey) private var largerPicture = false
-    /// The landscape bar hidden in a tab on the trailing edge, as a stashed Picture in Picture window
-    /// is (`BarStash`, `setBarPeek`), so the
-    /// stream takes the screen; this device's own choice, kept across launches. The tour shows it
-    /// whole while it runs (`barShown`).
-    /// `-SillBarHidden YES` starts folded.
-    @AppStorage("SillBarHidden") private var barHidden = false
-    /// The hidden bar is down over the stream for a while (`setBarPeek`).
-    @State private var barPeek = false
-    /// Where the stashed bar's tab sits along the trailing edge, 0 (top) to 1 (bottom); the device's own.
-    @AppStorage("SillBarStash") private var barStashY = 0.0
-    /// The Mac's menu bar as a strip along the top of the stream (MacMenuStrip), Settings' switch.
-    @AppStorage(StreamClient.menuStripKey) private var menuStripOn = true
-    @State private var barPeekHide: Task<Void, Never>? = nil
+    /// The app switcher of a three-finger swipe (AppSwitcherPolicy, AppSwitcher), this device's use
+    /// of the apps it orders them by, and the choice waiting out the switcher's pause.
+    @State private var switcher = AppSwitcherPolicy()
+    @State private var recents = AppSwitcherPolicy.Recents()
+    @State private var switcherChoice: Task<Void, Never>? = nil
     /// Larger Picture as it was in effect when the Settings panel opened (`largerPictureNow`), which
     /// the arrangement keeps until the panel closes; nil while it is closed. The panel hangs under row
     /// 1, which the arrangement moves by the picture's growth (157 pt on an 18 Pro Max), so a change
@@ -257,9 +253,11 @@ struct StreamScreen: View {
                 Group {
                     switch duo {
                     case .innerLandscape:
-                        landscape(bar: .regular, width: geo.size.width, fold: posture.info(in: geo.size))
+                        landscape(bar: .regular, width: geo.size.width, fold: posture.info(in: geo.size),
+                                  atEdge: geo.safeAreaInsets.top < 1)
                     case .outerLandscape:
-                        landscape(bar: .compact, width: geo.size.width, fold: posture.info(in: geo.size))
+                        landscape(bar: .compact, width: geo.size.width, fold: posture.info(in: geo.size),
+                                  atEdge: geo.safeAreaInsets.top < 1)
                     case .innerPortrait:
                         portrait(metrics: .regular)
                     case .outerPortrait:
@@ -285,7 +283,7 @@ struct StreamScreen: View {
                 // inside the stream panel's corner; never while something is open over the stream.
                 if clipboardChipAllowed, client.clipboardChip || client.clipboardNote != nil, let panel = tourTargets[.stream] {
                     let corner = ClipboardPolicy.chipCorner(landscape: layout == .landscape, linkLineShown: shownLinkLine != nil,
-                                                            barFolded: !barShown)
+                                                            barFolded: false)
                     ClipboardChip(client: client)
                         .frame(maxWidth: max(0, panel.width - 16), alignment: .trailing)
                         .padding(8)
@@ -293,6 +291,12 @@ struct StreamScreen: View {
                                alignment: corner == .topTrailing ? .topTrailing : .bottomTrailing)
                         .position(x: panel.midX, y: panel.midY)
                         .transition(.opacity)
+                }
+                // The app switcher (a three-finger swipe): a sibling over the layouts, so its tiles take
+                // their taps over the stream's UIKit input view, and a tap beside them closes it.
+                if switcher.isOpen {
+                    AppSwitcher(client: client, state: switcher, tap: { chooseFromSwitcher(switcher.tap($0)) },
+                                dismiss: closeSwitcher)
                 }
                 // The tour: a sibling above the layouts, as the pairing overlay is, and under it: an
                 // outside link puts the tour aside until the overlay has closed.
@@ -387,6 +391,16 @@ struct StreamScreen: View {
             runLaunchArguments()
             #endif
         }
+        // A three-finger swipe left or right: the switcher opens or steps (StreamClient.sendGesture).
+        .onChange(of: client.switcherSwipe) { _, swipe in if let swipe { switcherSwiped(forward: swipe.forward) } }
+        .onChange(of: client.connected) { _, up in if !up { closeSwitcher() } }
+        // This device's use of the apps, which the switcher orders them by: what streams as the
+        // screen comes, and each window picked since.
+        .onChange(of: client.active, initial: true) { _, source in
+            if case .window(let id) = source, let window = client.windows.first(where: { $0.id == id }) {
+                recents.note(window: id, bundleID: window.bundleID)
+            }
+        }
         .onChange(of: client.active) { _, source in
             if source != .none { withAnimation(.easeOut(duration: 0.18)) { drawerOpen = false } }
             // The host sizes a window as it selects it, from the last viewport it has; this repeat
@@ -404,6 +418,7 @@ struct StreamScreen: View {
         .onChange(of: panelSize) { _, _ in sendViewport(after: 0.25) }
         // Same wait for Aa: cycling from Off to 0.8× passes three sizes nobody wants the Mac to try.
         .onChange(of: textScale) { _, _ in sendViewport(after: 0.25) }
+        .onChange(of: desktopTextScale) { _, _ in sendViewport(after: 0.25) }
         // The stream rate follows the panel (`StreamClient.wantedFPS`): re-send when Low Power Mode
         // toggles or the screen's mode changes. Both notifications can arrive off the main thread.
         .onReceive(NotificationCenter.default.publisher(for: .NSProcessInfoPowerStateDidChange).receive(on: RunLoop.main)) { _ in
@@ -497,12 +512,17 @@ struct StreamScreen: View {
             let fps = StreamClient.wantedFPS(remote: client.awayCapsFrameRate)
             #if DEBUG
             print("viewport: \(Self.points(panelSize.width))×\(Self.points(panelSize.height)) pt, scale "
-                  + (textScale.map { TextScaleControl.label($0) } ?? "none") + ", \(fps) fps")
+                  + ((desktopScales ? desktopTextScale : textScale).map { TextScaleControl.label($0) } ?? "none")
+                  + (desktopScales ? " for the Desktop" : "") + ", \(fps) fps")
             #endif
+            // While the Desktop streams from a Mac that changes its resolution for Aa, the scale is
+            // for the Desktop (`Viewport.desktop`); every other Mac, and a window, as before.
+            let desktop: Bool? = desktopScales ? true : nil
             client.sendViewport(Viewport(width: Double(panelSize.width),
                                          height: Double(panelSize.height),
-                                         scale: textScale,
-                                         fps: fps))
+                                         scale: desktopScales ? desktopTextScale : textScale,
+                                         fps: fps,
+                                         desktop: desktop))
         }
     }
 
@@ -562,6 +582,20 @@ struct StreamScreen: View {
                       + (keyboardShown ? "up" : "down") + ")")
                 setSettings(false, restoreKeyboard: false)
                 overlay.toggleKeyboard()
+            }
+        }
+        // `-SillSwipe3 L@1,L@1.3,R@2`: a three-finger swipe left (L) or right (R) at each second, as
+        // the trackpad's or the stream's would make it (TrackpadGestures.route: the app switcher);
+        // the simulator has no three-finger touch.
+        let swipes = (defaults.string(forKey: "SillSwipe3") ?? "").split(separator: ",").compactMap { item -> (Bool, Double)? in
+            let parts = item.split(separator: "@")
+            guard parts.count == 2, let at = Double(parts[1]) else { return nil }
+            return (parts[0].uppercased() == "L", at)
+        }
+        for (left, time) in swipes {
+            after(time) {
+                print("switcher: -SillSwipe3, three fingers " + (left ? "left" : "right"))
+                if !client.sendGesture(left ? .swipeLeft : .swipeRight, fingers: 3) { switcherSwiped(forward: left) }
             }
         }
         // `-SillTurnAt <s>[,<s>…]`: at each second the scene is asked for the other orientation (upright
@@ -1056,131 +1090,131 @@ struct StreamScreen: View {
         reduceMotion ? .opacity : .scale(scale: 0.94, anchor: anchor).combined(with: .opacity)
     }
 
-    private func landscape(bar plain: BarMetrics, width: CGFloat, fold: FoldInfo) -> some View {
-        // The book pose (docs/iphone-duo-plan.md, (a)): nothing on the fold's band; elsewhere as before.
-        let (bar, stripWidth) = plain.clearing(fold, width: width)
-        // The bar's handle and hint sit in the middle of the leading page in the book pose (off the
-        // fold, as the link's line), in the middle of the screen otherwise.
-        let handleX = (DuoPosture.leadingPage(fold) ?? width) / 2
-        let peeking = !barShown && barPeek
-        // The Mac's menu bar under the bar, at the top edge while the bar is hidden; the hidden bar
-        // comes down over it, and the stashed bar's tab sits over its trailing end.
-        let strip = menuStripOn && !client.menus.menus.isEmpty
-        let stripHeight = strip ? MacMenuStrip.height(atEdge: !barShown) : 0
-        return VStack(spacing: 0) {
-            if barShown {
-                topBar(bar, stripWidth: stripWidth, width: width)
-                    .overlay(alignment: .bottomLeading) {
-                        BarHandle(x: handleX, hide: { setBarHidden(true) })
-                            .opacity(scaleOpen ? 0 : 1)
-                            .allowsHitTesting(!scaleOpen)
-                    }
-                    // Over the content area: the handle's touch reaches into the gap under the bar.
-                    .zIndex(1)
-                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+    /// Held sideways the Mac's menu bar is the one bar (.planboard/strip-gestures D1): the streamed
+    /// app's menus, then Apps, Keyboard, Aa and Settings at its trailing end (MacMenuStrip), over the
+    /// stream, which takes everything under it. Windows change with a three-finger swipe (the app
+    /// switcher) or Apps. `atEdge`: no status bar above it, so it sits a little lower (MacMenuStrip).
+    private func landscape(bar: BarMetrics, width: CGFloat, fold: FoldInfo, atEdge: Bool) -> some View {
+        VStack(spacing: 0) {
+            MacMenuStrip(client: client, fold: fold.verticalBand.map { $0.minX...$0.maxX }, atEdge: atEdge,
+                         onOpen: menusOpened, onClose: menusClosed) {
+                stripButtons
             }
-            // Hidden, the way a Picture in Picture window is stashed: the stream takes the whole screen,
-            // a tab waits on the trailing edge (`BarStash`), and the bar comes down over the stream (no
-            // resize, no refit of the Mac window) and goes up again by itself (`BarPeek`).
-            VStack(spacing: 0) {
-                if strip {
-                    MacMenuStrip(client: client, fold: fold.verticalBand.map { $0.minX...$0.maxX },
-                                 trailingRoom: barShown ? 0 : BarStash.touch.width, atEdge: !barShown,
-                                 onOpen: menusOpened, onClose: menusClosed)
-                        .opacity(scaleOpen ? 0.2 : 1)
-                        .allowsHitTesting(!scaleOpen)
-                        .transition(.opacity)
-                }
-                contentArea(bar: bar, under: peeking ? max(0, bar.height - stripHeight) : 0)
-            }
-            .animation(.easeOut(duration: 0.18), value: strip)
-            .overlay(alignment: .top) {
-                if peeking {
-                    topBar(bar, stripWidth: stripWidth, width: width)
-                        .shadow(color: .black.opacity(0.45), radius: 14, y: 4)
-                        .overlay(alignment: .bottomLeading) {
-                            BarHandle(x: handleX, hide: { setBarPeek(false) }, keep: { setBarHidden(false) })
-                                .opacity(scaleOpen ? 0 : 1)
-                                .allowsHitTesting(!scaleOpen)
-                        }
-                        .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
-                }
-            }
-            .overlay(alignment: .topTrailing) {
-                if !barShown && !barPeek {
-                    BarStash(position: $barStashY, show: { setBarPeek(true) })
-                        .transition(reduceMotion ? .opacity : .move(edge: .trailing).combined(with: .opacity))
-                }
-            }
-            // What the bar is used for keeps it down a while longer.
-            .onChange(of: client.active) { _, _ in if peeking { setBarPeek(true) } }
-            .onChange(of: textScale) { _, _ in if peeking { setBarPeek(true) } }
-            .onChange(of: keyboardShown) { _, _ in if peeking { setBarPeek(true) } }
+            // Over the content area: the Aa ruler hangs under the strip.
+            .zIndex(1)
+            contentArea(bar: bar)
         }
     }
 
-    private func topBar(_ bar: BarMetrics, stripWidth: CGFloat?, width: CGFloat) -> some View {
-        TopBar(client: client, metrics: bar, stripWidth: stripWidth, drawerOpen: $drawerOpen,
-               keyboardShown: $keyboardShown,
-               textScale: $textScale, scaleOpen: $scaleOpen, windowMenu: $windowMenu,
-               settingsOpen: settingsOpen,
-               // Apps, Menus, Aa, Keyboard, Desktop, Settings, and the strip.
-               menusFit: MacMenuButton.fits(width: width - 2 * bar.padding, buttons: 6, buttonWidth: bar.buttonWidth,
-                                            gap: bar.gap, thumbWidth: bar.thumbWidth),
-               toggleKeyboard: { overlay.toggleKeyboard() },
-               setSettings: { setSettings($0, restoreKeyboard: $1) },
-               menusOpened: menusOpened, menusClosed: menusClosed)
-    }
-
-    /// The landscape bar is drawn whole, above the stream: not hidden, or the tour runs (its cards
-    /// point at it).
-    private var barShown: Bool { !barHidden || tour != nil }
-
-    /// Hides the bar (video-player style) or keeps it shown for good. Either way what hangs from it
-    /// goes: the drawer, the Settings panel, a thumbnail's lights. The stream panel grows or shrinks,
-    /// and the viewport follows it as on any resize (`panelSize`).
-    private func setBarHidden(_ hidden: Bool) {
-        putAwayBarPanels()
-        barPeekHide?.cancel()
-        withAnimation(.easeOut(duration: 0.2)) {
-            barPeek = false
-            barHidden = hidden
-        }
-    }
-
-    /// The hidden bar comes down over the stream (`true`, which also restarts its clock) or goes up.
-    /// It goes up by itself after `BarPeek.seconds` with nothing open from it (the drawer, the
-    /// Settings panel, the Aa ruler, a thumbnail's lights, the Menus pull-down); with something open
-    /// it waits, and looks again as often.
-    private func setBarPeek(_ shown: Bool) {
-        barPeekHide?.cancel()
-        if !shown { putAwayBarPanels() }
-        if shown != barPeek { withAnimation(.easeOut(duration: 0.2)) { barPeek = shown } }
-        guard shown else { return }
-        barPeekHide = Task { @MainActor in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(BarPeek.seconds))
-                guard !Task.isCancelled, barPeek else { return }
-                if !(drawerOpen || settingsOpen || scaleOpen || windowMenu != nil || menusOpen) {
-                    putAwayBarPanels()
-                    withAnimation(.easeOut(duration: 0.2)) { barPeek = false }
-                    return
-                }
+    /// The strip's own buttons: Apps (the drawer, which also opens apps that are not running),
+    /// Keyboard, Aa (the Desktop's too, on a Mac that changes its resolution for it), Settings.
+    private var stripButtons: some View {
+        HStack(spacing: 0) {
+            StripButton(symbol: "magnifyingglass", open: drawerOpen,
+                        accessibilityLabel: drawerOpen ? "Close the app list" : "Open the app list") {
+                setSettings(false)
+                withAnimation(.easeOut(duration: 0.18)) { drawerOpen.toggle() }
             }
+            .tourTarget(.apps)
+            .opacity(scaleOpen ? 0.2 : 1)
+            StripButton(symbol: "keyboard", open: keyboardShown,
+                        accessibilityLabel: keyboardShown ? "Hide the keyboard" : "Show the keyboard") {
+                setSettings(false)
+                overlay.toggleKeyboard()
+            }
+            .tourTarget(.keyboard)
+            .opacity(scaleOpen ? 0.2 : 1)
+            TextScaleControl(scale: shownTextScale, open: $scaleOpen, width: 56, height: 26, radius: 7,
+                             pointsPerStep: 40, rulerHeight: 58)
+                .frame(width: 60, height: MenuStripLayout.height)
+                .opacity(textScaleWorks ? 1 : 0.35)
+                .allowsHitTesting(textScaleWorks)
+                .tourTarget(.textSize)
+            StripButton(symbol: "gearshape", open: settingsOpen,
+                        accessibilityLabel: settingsOpen ? "Close settings" : "Settings for \(client.macName.isEmpty ? "the Mac" : client.macName)") {
+                setSettings(!settingsOpen, restoreKeyboard: true)
+            }
+            .tourTarget(.settings)
+            .opacity(scaleOpen ? 0.2 : 1)
         }
     }
 
-    private func putAwayBarPanels() {
-        setSettings(false)
-        drawerOpen = false
-        windowMenu = nil
+    /// The Desktop streams from a Mac that changes its resolution for Aa.
+    private var desktopScales: Bool {
+        if case .desktop = client.active { return (client.hostDesktopScale ?? 0) >= 1 }
+        return false
+    }
+
+    /// What Aa shows and sets: the Desktop's own value while `desktopScales`, a window's otherwise.
+    private var shownTextScale: Binding<Double?> {
+        Binding(get: { desktopScales ? desktopTextScale : textScale },
+                set: { if desktopScales { desktopTextScale = $0 } else { textScale = $0 } })
+    }
+
+    /// Aa does something: a window streams, or the Desktop does from a Mac that changes its resolution
+    /// for it (`WindowList.desktopScale`).
+    private var textScaleWorks: Bool {
+        if case .desktop = client.active { return (client.hostDesktopScale ?? 0) >= 1 }
+        return true
+    }
+
+    // MARK: The app switcher
+
+    private var switcherShowing: AppSwitcherPolicy.Showing {
+        switch client.active {
+        case .none: return .nothing
+        case .desktop: return .desktop
+        case .window(let id): return .window(id)
+        }
+    }
+
+    private var switcherWindows: [AppSwitcherPolicy.Window] {
+        client.windows.map { AppSwitcherPolicy.Window(id: $0.id, bundleID: $0.bundleID) }
+    }
+
+    /// A three-finger swipe left or right: the row opens, or steps, and the pause starts again. Not
+    /// under the tour or the pairing overlay.
+    private func switcherSwiped(forward: Bool) {
+        guard tour == nil, !overlayShown else { return }
+        let now = ProcessInfo.processInfo.systemUptime
+        withAnimation(.easeOut(duration: 0.15)) {
+            switcher.swipe(forward: forward, windows: switcherWindows, showing: switcherShowing, recents: recents, now: now)
+        }
+        switcherChoice?.cancel()
+        switcherChoice = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(AppSwitcherPolicy.pause))
+            guard !Task.isCancelled else { return }
+            var state = switcher
+            let tile = state.due(now: ProcessInfo.processInfo.systemUptime)
+            withAnimation(.easeOut(duration: 0.15)) { switcher = state }
+            chooseFromSwitcher(tile)
+        }
+    }
+
+    /// The chosen tile streams, unless it is what streams already.
+    private func chooseFromSwitcher(_ tile: AppSwitcherPolicy.Tile?) {
+        switcherChoice?.cancel()
+        guard let tile else { return }
+        #if DEBUG
+        print("switcher: chose \(tile)")
+        #endif
+        switch AppSwitcherPolicy.source(for: tile, windows: switcherWindows, showing: switcherShowing, recents: recents) {
+        case .desktop?: client.select(.desktop)
+        case .window(let id)?: client.select(.window(id))
+        case .nothing?, nil: break
+        }
+    }
+
+    private func closeSwitcher() {
+        switcherChoice?.cancel()
+        withAnimation(.easeOut(duration: 0.15)) { switcher.close() }
     }
 
     /// `largerKeyboard`: Larger Picture's keyboard on a phone (see `body`), nil otherwise.
     private func portrait(metrics: PortraitMetrics, largerKeyboard: CGFloat? = nil) -> some View {
         PortraitStreamScreen(client: client, metrics: metrics, drawerOpen: $drawerOpen,
                              keyboardShown: $keyboardShown,
-                             textScale: $textScale, scaleOpen: $scaleOpen, windowMenu: $windowMenu,
+                             textScale: shownTextScale, scaleOpen: $scaleOpen, windowMenu: $windowMenu,
                              latch: $latch, overlay: overlay,
                              settingsOpen: settingsOpen,
                              setSettings: { setSettings($0, restoreKeyboard: $1) },
@@ -1356,205 +1390,6 @@ struct BarMetrics {
                                     showsTextSize: true, settingsWidth: 340)
 }
 
-private struct TopBar: View {
-    @ObservedObject var client: StreamClient
-    let metrics: BarMetrics
-    /// The book pose: the strip's width, so that it ends short of the fold (BarMetrics.clearing);
-    /// nil: it takes the room there is, as before.
-    var stripWidth: CGFloat? = nil
-    @Binding var drawerOpen: Bool
-    @Binding var keyboardShown: Bool
-    @Binding var textScale: Double?
-    @Binding var scaleOpen: Bool
-    @Binding var windowMenu: UInt32?
-    let settingsOpen: Bool
-    /// Whether the bar holds the Menus button and still a whole thumbnail (`MacMenuButton.fits`).
-    let menusFit: Bool
-    let toggleKeyboard: () -> Void
-    /// Opens or closes the Settings panel; the second argument says whether closing puts the
-    /// keyboard back (see `StreamScreen.setSettings`).
-    let setSettings: (_ open: Bool, _ restoreKeyboard: Bool) -> Void
-    /// The Menus pull-down opened and went (see `StreamScreen.menusOpened`).
-    let menusOpened: () -> Void
-    let menusClosed: () -> Void
-
-    var body: some View {
-        HStack(spacing: metrics.gap) {
-            button(open: drawerOpen, symbol: "magnifyingglass", label: "Apps",
-                   accessibilityLabel: drawerOpen ? "Close the app list" : "Open the app list",
-                   action: {
-                       setSettings(false, false)
-                       withAnimation(.easeOut(duration: 0.18)) { drawerOpen.toggle() }
-                   })
-
-            WindowStrip(client: client, width: metrics.thumbWidth, height: metrics.thumbHeight,
-                        radius: metrics.thumbRadius, spacing: metrics.thumbSpacing,
-                        pad: metrics.thumbPad, fade: metrics.thumbFade, menuFor: $windowMenu)
-                .opacity(scaleOpen ? 0.2 : 1)      // the ruler is centred on Aa and reaches over the strip's end
-                .allowsHitTesting(!scaleOpen)
-                .frame(width: stripWidth)
-                .tourTarget(.strip, inset: WindowStrip.tourBand(pad: metrics.thumbPad))
-            // The book pose: the fold's band, and nothing on it, between the strip and the buttons.
-            if stripWidth != nil { Spacer(minLength: 0) }
-
-            // The Mac's menus of the streamed app, next to the thumbnails because they are the picked
-            // window's app's. Only while the Mac sent some, and where the bar holds it: with none the
-            // strip takes its room back.
-            if client.menus.hasMenus, menusFit {
-                MacMenuButton(client: client, width: metrics.buttonWidth, height: metrics.buttonHeight,
-                              spacing: metrics.buttonSpacing, onOpen: menusOpened, onClose: menusClosed)
-                    .opacity(scaleOpen ? 0 : 1)    // under the Aa ruler, as the buttons after Aa
-                    .allowsHitTesting(!scaleOpen)
-                    .transition(.opacity)
-            }
-
-            // Text size: the host sizes the Mac window to the panel divided by this scale, so a
-            // bigger number means a smaller Mac window and bigger text here. The slider unfolds to
-            // the right, over the two buttons after it, which fade while it is open.
-            TextScaleControl(scale: $textScale, open: $scaleOpen,
-                             width: metrics.buttonWidth, height: metrics.buttonHeight,
-                             pointsPerStep: metrics.buttonHeight >= 60 ? 44 : 40)
-                .tourTarget(.textSize)
-
-            button(open: keyboardShown, symbol: "keyboard", label: "Keyboard",
-                   accessibilityLabel: keyboardShown ? "Hide the keyboard" : "Show the keyboard",
-                   action: { setSettings(false, false); toggleKeyboard() })
-                .opacity(scaleOpen ? 0 : 1)
-                .allowsHitTesting(!scaleOpen)
-                .tourTarget(.keyboard)
-
-            button(open: client.active == .desktop, symbol: "desktopcomputer", label: "Desktop",
-                   accessibilityLabel: "Show the full Mac desktop",
-                   action: { client.select(.desktop) })
-                .opacity(scaleOpen ? 0 : 1)
-                .allowsHitTesting(!scaleOpen)
-
-            // Leave's old slot: Disconnect is the Settings panel's pinned last row now.
-            button(open: settingsOpen, symbol: "gearshape", label: "Settings",
-                   accessibilityLabel: settingsOpen ? "Close settings" : "Settings for \(client.macName.isEmpty ? "the Mac" : client.macName)",
-                   action: { setSettings(!settingsOpen, true) })
-                .opacity(scaleOpen ? 0 : 1)
-                .allowsHitTesting(!scaleOpen)
-                .tourTarget(.settings)
-        }
-        .animation(.easeOut(duration: 0.16), value: scaleOpen)
-        .animation(.easeOut(duration: 0.18), value: client.menus.hasMenus)
-        .frame(height: metrics.height)
-        .padding(.horizontal, metrics.padding)
-        // The bar's colour runs to the screen edge; its contents stay inside the safe area.
-        .background(Palette.bar.ignoresSafeArea(edges: .top))
-    }
-
-    private func button(open: Bool, symbol: String, label: String, accessibilityLabel: String,
-                        action: @escaping () -> Void) -> some View {
-        BarButton(open: open, width: metrics.buttonWidth, height: metrics.buttonHeight,
-                  accessibilityLabel: accessibilityLabel, action: action) {
-            VStack(spacing: metrics.buttonSpacing) {
-                Image(systemName: symbol)
-                    .font(.system(size: 22))
-                    .foregroundStyle(open ? Palette.accent : Palette.text)
-                Text(label)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(open ? Palette.accent : Palette.barLabel)
-            }
-        }
-    }
-}
-
-// MARK: - Folding the bar
-
-/// The landscape bar's grabber: a short capsule in the black gap just under the bar, clear of the
-/// thumbnails' badges, in the middle of the screen (of the leading page in the book pose). A tap,
-/// or a swipe up, hides the bar (`BarStash`). Its touch is 64×20 pt, 12 in the bar's bottom margin
-/// and 8 in the gap over the stream panel (over the stream itself while the hidden bar is down).
-/// On the hidden bar come down, a swipe down (`keep`) keeps the bar shown for good.
-private struct BarHandle: View {
-    let x: CGFloat
-    let hide: () -> Void
-    var keep: (() -> Void)? = nil
-
-    var body: some View {
-        Capsule(style: .continuous)
-            .fill(Palette.muted.opacity(0.55))
-            .frame(width: 36, height: 4)
-            .padding(.top, 14)
-            .frame(width: 64, height: 20, alignment: .top)
-            .contentShape(Rectangle())
-            .onTapGesture(perform: hide)
-            .gesture(DragGesture(minimumDistance: 6).onEnded { drag in
-                if drag.translation.height < -12 { hide() } else if drag.translation.height > 12 { keep?() }
-            })
-            .offset(x: x - 32, y: 8)
-            .accessibilityElement()
-            .accessibilityLabel("Hide the bar")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { hide() }
-            .accessibilityAction(named: "Keep the bar shown") { keep?() }
-    }
-}
-
-/// How long the hidden bar stays down over the stream with nothing open from it.
-enum BarPeek {
-    static let seconds: Double = 4
-}
-
-/// The hidden bar, stashed the way a Picture in Picture window is: a 30×84 pt tab on the screen's
-/// trailing edge, at its top at first (8 pt down), rounded on its inner side, the bar's colour over a
-/// material, with a chevron pointing in. A tap, or a pull inward, brings the bar down over the
-/// stream; a drag up or down moves the tab along the edge (kept, `SillBarStash`), off whatever it
-/// covers. Its touch is 52×100 pt, the only stretch of the picture it takes touches from. The clipboard chip goes to the bottom corner while the bar is
-/// hidden (`ClipboardPolicy.chipCorner`).
-private struct BarStash: View {
-    @Binding var position: Double
-    let show: () -> Void
-    @State private var drag: CGFloat = 0
-    static let size = CGSize(width: 30, height: 84)
-    static let touch = CGSize(width: 52, height: 100)
-
-    var body: some View {
-        GeometryReader { geo in
-            let room = max(0, geo.size.height - Self.touch.height)
-            let y = min(room, max(0, CGFloat(position) * room + drag))
-            tab
-                .frame(width: Self.touch.width, height: Self.touch.height, alignment: .trailing)
-                .contentShape(Rectangle())
-                .onTapGesture(perform: show)
-                .gesture(DragGesture(minimumDistance: 4)
-                    .onChanged { g in
-                        if abs(g.translation.height) > abs(g.translation.width) { drag = g.translation.height }
-                    }
-                    .onEnded { g in
-                        if -g.translation.width > 24, -g.translation.width > abs(g.translation.height) {
-                            drag = 0
-                            show()
-                        } else {
-                            if room > 0 { position = Double(y / room) }
-                            drag = 0
-                        }
-                    })
-                .offset(x: geo.size.width - Self.touch.width, y: y)
-                .accessibilityElement()
-                .accessibilityLabel("Show the bar")
-                .accessibilityAddTraits(.isButton)
-                .accessibilityAction { show() }
-        }
-        .ignoresSafeArea(.container, edges: .trailing)
-    }
-
-    private var tab: some View {
-        let shape = UnevenRoundedRectangle(topLeadingRadius: 14, bottomLeadingRadius: 14, style: .continuous)
-        return Image(systemName: "chevron.compact.left")
-            .font(.system(size: 22, weight: .bold))
-            .foregroundStyle(Palette.text)
-            .frame(width: Self.size.width, height: Self.size.height)
-            .background(shape.fill(Palette.bar.opacity(0.78)))
-            .background(shape.fill(.ultraThinMaterial))
-            .overlay(shape.strokeBorder(Color.white.opacity(0.22), lineWidth: 1))
-            .shadow(color: .black.opacity(0.35), radius: 6)
-            .environment(\.colorScheme, .dark)
-    }
-}
-
 // MARK: - Spotlight
 
 /// Spotlight on the Mac: exactly ⌘Space, down then up. Whatever modifiers are latched never join
@@ -1629,6 +1464,10 @@ struct TextScaleControl: View {
     /// text, 2 pt over the value (every bar that has always had it).
     var iconBox: CGFloat? = nil
     var iconSpacing: CGFloat = 2
+    /// The menu bar strip's small button (MacMenuStrip): "Aa 1×" on one line, and the ruler, this
+    /// tall, hangs under the button instead of opening over it; nil: the ruler opens over the button
+    /// at its own height, as in every bar.
+    var rulerHeight: CGFloat? = nil
 
     static let steps: [Double] = [0.5, 0.75, 1.0, 1.25, 1.5]
     /// Padding either side of the visible ruler; two detents show each side of the thumb.
@@ -1640,30 +1479,19 @@ struct TextScaleControl: View {
     @State private var startX: CGFloat = 0
 
     var body: some View {
-        VStack(spacing: iconBox == nil ? 2 : iconSpacing) {
-            if let iconBox {
-                Text("Aa")
-                    .font(.system(size: height >= 60 ? 19 : 17, weight: .semibold))
-                    .foregroundStyle(Palette.text)
-                    .frame(height: iconBox)
-            } else {
-                Text("Aa")
-                    .font(.system(size: height >= 60 ? 19 : 17, weight: .semibold))
-                    .foregroundStyle(Palette.text)
-            }
-            Text(Self.label(scale ?? 1.0) + "×")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(Palette.barLabel)
-        }
+        face
         .frame(width: width, height: height)
-        .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Palette.control))
-        .opacity(open ? 0 : 1)
-        .overlay {
-            // Centred on the button: the thumb is where the finger came down.
+        .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(open && rulerHeight != nil ? Palette.controlOpen : Palette.control))
+        .opacity(open && rulerHeight == nil ? 0 : 1)
+        .overlay(alignment: rulerHeight == nil ? .top : .topTrailing) {
+            // Centred on the button: the thumb is where the finger came down. The strip's ruler
+            // hangs 6 pt under the button, its trailing edge at the button's, so near the screen's
+            // edge (the strip's Aa is second from it) it stays on screen.
             slider
                 .opacity(open ? 1 : 0)
                 .scaleEffect(open ? 1 : 0.6)
                 .allowsHitTesting(false)
+                .offset(y: rulerHeight == nil ? 0 : height + 6)
         }
         .zIndex(open ? 1 : 0)
         .onChange(of: open, initial: true) { _, isOpen in if isOpen { live = scale ?? 1.0 } }
@@ -1705,13 +1533,44 @@ struct TextScaleControl: View {
         }
     }
 
+    /// The button's words: "Aa" over the value in the bars, on one line in the strip.
+    @ViewBuilder private var face: some View {
+        if rulerHeight != nil {
+            HStack(spacing: 3) {
+                Text("Aa").font(.system(size: 14, weight: .semibold)).foregroundStyle(open ? Palette.accent : Palette.text)
+                Text(Self.label(scale ?? 1.0) + "×").font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.barLabel)
+            }
+        } else {
+            barFace
+        }
+    }
+
+    private var barFace: some View {
+        VStack(spacing: iconBox == nil ? 2 : iconSpacing) {
+            if let iconBox {
+                Text("Aa")
+                    .font(.system(size: height >= 60 ? 19 : 17, weight: .semibold))
+                    .foregroundStyle(Palette.text)
+                    .frame(height: iconBox)
+            } else {
+                Text("Aa")
+                    .font(.system(size: height >= 60 ? 19 : 17, weight: .semibold))
+                    .foregroundStyle(Palette.text)
+            }
+            Text(Self.label(scale ?? 1.0) + "×")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(Palette.barLabel)
+        }
+    }
+
     /// The ruler: a track with five ticks and labels that slides so the live value sits under the
     /// fixed thumb; the ends fade out where they run past the panel.
     private var slider: some View {
         let w = sliderWidth
         let step = pointsPerStep
         let midX = w / 2
-        let midY = height / 2 + 4
+        let h = rulerHeight ?? height
+        let midY = h / 2 + 4
         func x(_ value: Double) -> CGFloat { midX + CGFloat((value - live) / 0.25) * step }
         return ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Palette.controlOpen)
@@ -1730,7 +1589,7 @@ struct TextScaleControl: View {
                         .offset(x: x(value) - step / 2, y: midY + 9)
                 }
             }
-            .frame(width: w, height: height, alignment: .topLeading)   // the mask below is sized to this
+            .frame(width: w, height: h, alignment: .topLeading)   // the mask below is sized to this
             .mask(
                 LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: 0.12),
                                        .init(color: .black, location: 0.88), .init(color: .clear, location: 1)],
@@ -1750,8 +1609,9 @@ struct TextScaleControl: View {
                 .frame(width: 60, alignment: .center)
                 .offset(x: midX - 30, y: max(midY - 34, -1))
         }
-        .frame(width: w, height: height, alignment: .topLeading)
-        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        .frame(width: w, height: h, alignment: .topLeading)
+        .clipShape(RoundedRectangle(cornerRadius: rulerHeight == nil ? radius : 14, style: .continuous))
+        .shadow(color: .black.opacity(rulerHeight == nil ? 0 : 0.4), radius: 10, y: 4)
     }
 
     /// Nearest detent, clamped to the ends.

@@ -20,9 +20,18 @@ public struct Viewport: Codable, Hashable {
     /// The host runs the stream at the highest rate among its connected clients and restarts the
     /// pipeline when that changes.
     public var fps: Int?
+    /// The Desktop's text size: true says this `scale` is also for the
+    /// Desktop, which the host then shows larger or smaller by switching the Mac display's resolution
+    /// among macOS's own scaled modes (More Space ↔ Larger Text), 1.0 or nil being the display's own
+    /// mode. Sent only to a host whose window list says `desktopScale` 1 or more. Nil or false (every
+    /// device before 2026-10-25): the host never changes the display's resolution for this device,
+    /// as before. With several devices, the latest one's viewport that says true is followed.
+    public var desktop: Bool?
 
-    public init(width: Double, height: Double, scale: Double?, localCursor: Bool? = nil, fps: Int? = nil) {
+    public init(width: Double, height: Double, scale: Double?, localCursor: Bool? = nil, fps: Int? = nil,
+                desktop: Bool? = nil) {
         self.width = width; self.height = height; self.scale = scale; self.localCursor = localCursor; self.fps = fps
+        self.desktop = desktop
     }
 }
 

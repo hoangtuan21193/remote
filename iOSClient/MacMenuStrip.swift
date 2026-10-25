@@ -1,51 +1,79 @@
 import SwiftUI
 import UIKit
 
-/// The Mac's menu bar as a thin strip along the top of the stream (2026-10-25; Settings › Mac Menu
-/// Bar, `StreamClient.menuStripKey`): the streamed app's menu titles in a row, the app's own in
-/// bold, as the Mac draws them; a tap on one opens that menu under it, as on the Mac, and a choice
-/// does on the Mac what choosing it there would. Under the landscape bar, and at the screen's top
-/// edge while the bar is hidden, so the menus are one tap away either way. Only while the Mac sent
-/// menus (with only a note, no Accessibility on the Mac, the Menus button says so instead).
+/// The Mac's menu bar as a strip along the top of the stream, the one bar held sideways
+/// (2026-10-25; .planboard/strip-gestures D1, D6, D8): the streamed app's menu titles in a row, the
+/// app's own in bold, as the Mac draws them, and at its trailing end the device's own buttons
+/// (`trailing`: Apps, Keyboard, Aa, Settings). A tap on a title opens that menu under it, as on the
+/// Mac, and a choice does on the Mac what choosing it there would. Always there held sideways: with
+/// no menus from the Mac it holds the buttons alone, and with only a note (no Accessibility on the
+/// Mac) one "Menus" title that shows it.
 ///
-/// Where each title goes is `MenuStripLayout`'s (off the Duo's fold, clear of the stashed bar's tab,
-/// » for what does not fit). Each title is a UIKit pull-down holding the one deferred element of its
-/// menu (MacMenuElements), so a menu is fetched from the Mac when it opens, fresh every time, as the
+/// Where each title goes is `MenuStripLayout`'s (off the Duo's fold, » for what does not fit before
+/// the buttons). Each title is a UIKit pull-down holding the one deferred element of its menu
+/// (MacMenuElements), so a menu is fetched from the Mac when it opens, fresh every time, as the
 /// Menus button's and the iPad menu bar's are; a stale top level or a disabled Mac menu draws its
 /// title dimmed and opens nothing. While a menu is open its title is drawn open (the accent), and
 /// `onOpen` and `onClose` tell the stream screen, as the Menus button's do.
-struct MacMenuStrip: View {
+struct MacMenuStrip<Trailing: View>: View {
     @ObservedObject var client: StreamClient
     /// The fold's band in the strip's own space (the book pose), nil elsewhere.
     var fold: ClosedRange<CGFloat>? = nil
-    /// The stashed bar's tab over the strip's trailing end.
-    var trailingRoom: CGFloat = 0
-    /// At the screen's top edge (the bar hidden), the titles `edgeInset` lower: the top 20 pt or so of
-    /// the Duo's screen take no touch (measured on its simulator, as the bar's handle found), and
-    /// the titles' middle then sits below it.
+    /// At the screen's top edge with no status bar above it, the strip `edgeInset` lower: the top
+    /// 20 pt or so of the Duo's screen take no touch (measured on its simulator: a tap at 17 pt did
+    /// nothing, at 22 pt it opened the menu), and the titles' middle then sits below it.
     var atEdge = false
     let onOpen: () -> Void
     var onClose: () -> Void = {}
+    @ViewBuilder let trailing: () -> Trailing
 
-    static let edgeInset: CGFloat = 8
+    static var edgeInset: CGFloat { 8 }
     static func height(atEdge: Bool) -> CGFloat { MenuStripLayout.height + (atEdge ? edgeInset : 0) }
 
     var body: some View {
-        MacMenuStripBar(client: client, fold: fold, trailingRoom: trailingRoom, onOpen: onOpen, onClose: onClose)
-            .frame(height: MenuStripLayout.height)
-            .padding(.top, atEdge ? Self.edgeInset : 0)
-            .frame(maxWidth: .infinity)
-            .background(Palette.bar.ignoresSafeArea(edges: .top))
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
-            }
+        HStack(spacing: 0) {
+            MacMenuStripBar(client: client, fold: fold, onOpen: onOpen, onClose: onClose)
+                .frame(maxWidth: .infinity)
+            trailing()
+                .padding(.trailing, MenuStripLayout.side)
+        }
+        .frame(height: MenuStripLayout.height)
+        .padding(.top, atEdge ? Self.edgeInset : 0)
+        .frame(maxWidth: .infinity)
+        .background(Palette.bar.ignoresSafeArea(edges: .top))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1)
+        }
+    }
+}
+
+/// One of the strip's own buttons: an SF Symbol in a 40×26 pt chip, drawn open (the accent) while
+/// what it opens shows; its touch is the strip's whole height, 44 pt wide.
+struct StripButton: View {
+    let symbol: String
+    let open: Bool
+    let accessibilityLabel: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(open ? Palette.accent : Palette.text)
+                .frame(width: 40, height: 26)
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(open ? Palette.controlOpen : Palette.control))
+                .frame(width: 44, height: MenuStripLayout.height)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 
 private struct MacMenuStripBar: UIViewRepresentable {
     @ObservedObject var client: StreamClient
     let fold: ClosedRange<CGFloat>?
-    let trailingRoom: CGFloat
     let onOpen: () -> Void
     let onClose: () -> Void
 
@@ -61,7 +89,7 @@ private struct MacMenuStripBar: UIViewRepresentable {
         view.client = client
         view.onOpen = onOpen
         view.onClose = onClose
-        view.set(top: client.menus.top, fold: fold, trailingRoom: trailingRoom)
+        view.set(top: client.menus.top, fold: fold, trailingRoom: 0)
     }
 }
 
@@ -110,6 +138,17 @@ final class MacMenuStripView: UIView {
     private func rebuild() {
         buttons.forEach { $0.removeFromSuperview() }
         buttons = []
+        // Only a note (no Accessibility on the Mac): one "Menus" title that shows it.
+        if let top, top.menus.isEmpty, let note = top.note {
+            let button = MacMenuTriggerButton(type: .custom)
+            configure(button, title: "Menus", font: Self.font)
+            button.menu = UIMenu(children: [MacMenuElements.noteAction(note)])
+            button.accessibilityLabel = "Menus"
+            addSubview(button)
+            buttons.append(button)
+            setNeedsLayout()
+            return
+        }
         guard let top, let client, let version = top.version else { setNeedsLayout(); return }
         for (i, row) in top.menus.enumerated() {
             let button = MacMenuTriggerButton(type: .custom)
@@ -163,7 +202,7 @@ final class MacMenuStripView: UIView {
         if let rect = layout.more, let top, let client, let version = top.version {
             more.isHidden = false
             more.frame = rect.insetBy(dx: 0, dy: 3)
-            let rows = layout.overflow.map { top.menus[$0] }
+            let rows = layout.overflow.compactMap { top.menus.indices.contains($0) ? top.menus[$0] : nil }
             let menus: [UIMenuElement] = rows.map { row in
                 guard !top.stale, row.enabled, row.id != nil else { return UIAction(title: row.title, attributes: .disabled) { _ in } }
                 return UIMenu(title: row.title, children: [MacMenuElements.deferred(for: row, topLevelVersion: version, client: client)])

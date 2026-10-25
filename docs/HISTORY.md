@@ -4,6 +4,47 @@ The "Current step" log and milestone notes that used to live in CLAUDE.md, moved
 
 ## Current step
 
+**Held sideways the menu bar is the one bar; apps change with three fingers, Spaces with four; Aa
+on the Desktop changes the Mac's resolution (2026-10-25, branch `strip-gestures`; a comment on the
+iPhone Duo canvas, decided on a planboard in two rounds, `.planboard/strip-gestures/` with PLAN.md and
+DECISIONS.md).** Asked: Settings and Aa at the menu bar's right; switch apps with a three-finger swipe
+and Desktops with four; text size on the Desktop too, by changing the Mac's resolution if need be.
+Then, on the board: no toolbar at all, the app thumbnails as a row in the middle like ⌘Tab, Keyboard
+and Apps on the menu bar too, no Desktop button, the menu bar always there.
+- Device, sideways: no TopBar, no stashed tab, no grabber (BarStash, BarHandle, BarPeek gone, and the
+  `SillBarHidden` preference with them). `MacMenuStrip` is the one bar: the menus, then Apps, Keyboard,
+  Aa and Settings (`StripButton`; Aa is `TextScaleControl` with `rulerHeight`, its ruler hanging under
+  the strip, trailing edges aligned so it stays on screen). The strip is always there, 8 pt lower
+  where no status bar is above it; Settings › Mac Menu Bar is gone. Upright layouts are as they were.
+- Gestures (`TrackpadGestures.route`): three fingers left or right open and step the app switcher
+  (`AppSwitcherPolicy`, `AppSwitcher`: the Desktop, then the apps most recently used here first;
+  chosen after 0.6 s still or a tap; an app opens on its window last seen here); three fingers up,
+  down, pinched or spread go to the Mac as before; four fingers left or right go to the Mac as the
+  Spaces; other four-finger gestures do nothing. Settings' rows: "Swipe Left or Right — Switch Apps",
+  "Four Fingers Left or Right — Spaces".
+- The Desktop's text size: the Desktop has its own Aa value. To a Mac whose window list says
+  `desktopScale` 1, a viewport while the Desktop streams carries `desktop: true` (both fields
+  additive); older Macs get today's viewport and Aa is dimmed on the Desktop. The host
+  (`DesktopScalePolicy`, `DisplayResolution`) picks the display's own scaled mode nearest the asked
+  size relative to today's, same shape, HiDPI kept, switches it with `.forAppOnly` between stopping and
+  starting the Desktop's stream, and goes back when the Desktop stops, the last asking device leaves,
+  the host quits, or at its next launch after a crash. A mode the person picks on the Mac stays.
+- Tour: sideways, the bar card lights Apps, Aa and Keyboard and tells the swipes; hints say "menu bar".
+- Checks: `app-switcher` (33 cases, 17 mutants), `desktop-scale` (104, 27), `gestures` (+11 cases, 5
+  mutants), `tour` (the sideways model redrawn, 111,191 cases, 84 mutants), `compatibility` and
+  `protocol` (the new fields both ways, older decoders), in CI's list.
+- Verified: the Mac release build; the iOS simulator build; on the iPhone Duo simulator the strip with
+  its buttons, the switcher (`-SillSwipe3`), and against a synthetic host with `SILL_TEST_DESKTOP_MODES`
+  Aa on the Desktop sent `desktop: true` and the host chose 1147×745 for 1.25× (not applied); the real
+  display switched once from a test program, 1920×1280 to 1800×1200 pt and back.
+  Untested: a real Mac's display changed from a device and restored on disconnect, three- and
+  four-finger swipes on a real iPhone Duo, iPad and iPhone sideways on a simulator, VoiceOver on the
+  switcher.
+- Design: every sideways artboard on the iPhone, iPad and iPhone Duo canvases redrawn (no toolbar);
+  the bar-hidden and bar-brought-down artboards removed; new "app switcher" artboards on all three and
+  "Desktop, text size" on the Duo and iPad; iPhone's window lights now upright; the Settings panels
+  without the Mac Menu Bar switch.
+
 **The Mac's menu bar as a strip along the top of the stream (2026-10-25, branch `slim-claude-md`;
 two comments on the iPhone Duo canvas: "the Mac app's menus, File, Edit, View, as a small bar at the
 top to pick from, as on macOS" and "a thin menu bar always at the top edge, with an option to show
