@@ -48,13 +48,13 @@ enum GoodbyePolicy {
     /// "iPhone", `saved` whether the Mac is a saved one (its remote door may be dialled).
     static func outcome(_ goodbye: Goodbye?, mac: String, device: String, saved: Bool) -> Outcome {
         guard let goodbye else {
-            return Outcome(text: saved ? "\(mac) disconnected. Sill will reconnect when it can reach it."
+            return Outcome(text: saved ? "\(mac) disconnected. Rimoto will reconnect when it can reach it."
                                        : "\(mac) disconnected. It will reconnect when the Mac is back.",
                            reconnect: true, remoteAllowed: saved, isNotice: false)
         }
         switch goodbye.reason {
         case Goodbye.quit:
-            return Outcome(text: "\(mac) quit Sill. This \(device) reconnects when it’s back.",
+            return Outcome(text: "\(mac) quit Rimoto. This \(device) reconnects when it’s back.",
                            reconnect: true, remoteAllowed: saved, isNotice: false)
         case Goodbye.removed:
             return Outcome(text: "\(mac) removed this \(device). To use it again, pair it again.",
@@ -72,13 +72,13 @@ enum GoodbyePolicy {
                            reconnect: false, remoteAllowed: false, isNotice: false)
         case Goodbye.update:
             // The host always sends its message; these words are for one that does not.
-            var own = "Update Sill on this \(device) to keep using \(mac)."
+            var own = "Update Rimoto on this \(device) to keep using \(mac)."
             if let floor = goodbye.minimumVersion.flatMap({ SillVersion($0) }) { own += " It needs version \(floor) or later." }
             return Outcome(text: message(goodbye) ?? own, reconnect: goodbye.reconnect == true, remoteAllowed: saved,
                            storeLink: true, isNotice: true)
         default:
             let reconnect = goodbye.reconnect == true
-            let own = reconnect ? "\(mac) closed the connection. Sill will reconnect when it can."
+            let own = reconnect ? "\(mac) closed the connection. Rimoto will reconnect when it can."
                                 : "\(mac) closed the connection. Tap it to try again."
             return Outcome(text: message(goodbye) ?? own, reconnect: reconnect, remoteAllowed: saved, isNotice: true)
         }

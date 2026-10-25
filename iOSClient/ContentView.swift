@@ -1103,7 +1103,7 @@ struct ConnectScreen: View {
         // before Sill's App Store address is known (SillLinks): the words say what to do anyway.
         if let notice = client.notice, notice.storeLink, notice.text == client.status, let url = SillLinks.appStore {
             Link(destination: url) {
-                Text("Update Sill in the App Store")
+                Text("Update Rimoto in the App Store")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Palette.accent)
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
@@ -1139,7 +1139,7 @@ struct ConnectScreen: View {
         }
 
         if client.showsNearbyHint {
-            Text("Your Mac has to be on the same Wi\u{2011}Fi network as this \(device), or have Direct Wireless Connection turned on in Sill. Away from home, add it once with a code from your Mac.")
+            Text("Your Mac has to be on the same Wi\u{2011}Fi network as this \(device), or have Direct Wireless Connection turned on in Rimoto. Away from home, add it once with a code from your Mac.")
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1246,7 +1246,7 @@ struct ConnectScreen: View {
     /// openURL), and VoiceOver reads it as a link. The addresses are SillLinks'.
     private func footer(_ layout: ConnectLayout) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Needs the free Sill app on your Mac.")
+            Text("Needs the free Rimoto app on your Mac.")
                 .foregroundStyle(Palette.muted)
                 .fixedSize(horizontal: false, vertical: true)
             // All three on one line while they fit, else the download link over the other two,

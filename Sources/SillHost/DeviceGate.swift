@@ -58,10 +58,10 @@ package enum DeviceGate {
                 minimumVersion: floor.description, reconnect: false)
     }
 
-    /// "Update Sill on your iPad to keep using Mac mini. It needs version 1.2 or later." The Mac by
+    /// "Update Rimoto on your iPad to keep using Mac mini. It needs version 1.2 or later." The Mac by
     /// its name: on the device's connect screen "this Mac" would read as the device itself.
     package static func message(_ hello: Hello?, floor: SillVersion, macName: String) -> String {
-        "Update Sill on your \(deviceWord(hello)) to keep using \(macName). It needs version \(floor) or later."
+        "Update Rimoto on your \(deviceWord(hello)) to keep using \(macName). It needs version \(floor) or later."
     }
 
     /// "iPhone" or "iPad" from the start of the hello's cleaned name, else "device".

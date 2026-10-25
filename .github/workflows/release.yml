@@ -76,19 +76,19 @@ jobs:
       - name: Pure checks (Tests/checks/run-all.sh)
         run: Tests/checks/run-all.sh
 
-      - name: Build Sill.app (Scripts/make-app.sh, signed ad hoc)
+      - name: Build Rimoto.app (Scripts/make-app.sh, signed ad hoc)
         run: Scripts/make-app.sh
 
-      - name: Check Sill.app and zip it
+      - name: Check Rimoto.app and zip it
         id: zip
         run: |
-          app=.build/Sill.app
+          app=.build/Rimoto.app
           version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")"
           build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist")"
           codesign --verify --strict "$app"
           for file in Assets.car AppIcon.icns; do
             if [ ! -f "$app/Contents/Resources/$file" ]; then
-              echo "::error::Sill.app has no $file: make-app.sh could not make the icon (its warning above says why), and a signed release refuses to ship without one."
+              echo "::error::Rimoto.app has no $file: make-app.sh could not make the icon (its warning above says why), and a signed release refuses to ship without one."
               exit 1
             fi
           done
@@ -96,7 +96,7 @@ jobs:
           ditto -c -k --keepParent "$app" "$zip"
           echo "zip=$zip" >> "$GITHUB_OUTPUT"
           {
-            echo "Sill $version ($build) for $(lipo -archs "$app/Contents/MacOS/Sill"): the checks passed and Sill.app built."
+            echo "Sill $version ($build) for $(lipo -archs "$app/Contents/MacOS/Rimoto"): the checks passed and Rimoto.app built."
             echo
             echo "The artifact $(basename "$zip") is signed ad hoc, not with Developer ID, and not notarized: for trying out, not for anyone else to download. SHA-256 $(shasum -a 256 "$zip" | awk '{ print $1 }')."
           } | tee -a "$GITHUB_STEP_SUMMARY"
@@ -106,14 +106,14 @@ jobs:
       - name: Make the disk image (Scripts/make-dmg.sh, signed ad hoc)
         id: dmg
         run: |
-          app=.build/Sill.app
+          app=.build/Rimoto.app
           version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")"
           dmg=".build/Sill-$version-adhoc.dmg"
           Scripts/make-dmg.sh --sign - "$app" "$dmg"
           echo "dmg=$dmg" >> "$GITHUB_OUTPUT"
           {
             echo
-            echo "The artifact $(basename "$dmg") is the disk image a release publishes as Sill.dmg, with this Sill.app inside, signed ad hoc and not notarized: for looking at its window, not for anyone else to download. SHA-256 $(shasum -a 256 "$dmg" | awk '{ print $1 }')."
+            echo "The artifact $(basename "$dmg") is the disk image a release publishes as Sill.dmg, with this Rimoto.app inside, signed ad hoc and not notarized: for looking at its window, not for anyone else to download. SHA-256 $(shasum -a 256 "$dmg" | awk '{ print $1 }')."
             echo "Nothing was published: the repository variable SILL_SIGN_IN_CI is not true."
           } | tee -a "$GITHUB_STEP_SUMMARY"
 

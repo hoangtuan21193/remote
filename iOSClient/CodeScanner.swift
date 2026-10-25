@@ -58,7 +58,7 @@ struct CodeScanner: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Palette.control)
                 if denied {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Sill can’t use the camera. Enter the code instead, or allow the camera in Settings.")
+                        Text("Rimoto can’t use the camera. Enter the code instead, or allow the camera in Settings.")
                             .font(.system(size: 15))
                             .foregroundStyle(Palette.text)
                             .fixedSize(horizontal: false, vertical: true)
@@ -88,7 +88,7 @@ struct CodeScanner: View {
             .accessibilityElement(children: denied ? .contain : .ignore)
             .accessibilityLabel(denied ? "" : mac.map(DiscoveryPolicy.HomeCopy.viewfinderLabel) ?? "Camera. Point it at the code on your Mac.")
             if !denied {
-                Text(notSill ? "That’s not a Sill code." : retryNeedsTap ? "Tap the code to try again."
+                Text(notSill ? "That’s not a Rimoto code." : retryNeedsTap ? "Tap the code to try again."
                      : mac.map(DiscoveryPolicy.HomeCopy.viewfinderCaption) ?? "Point at the code on your Mac")
                     .font(.system(size: 13))
                     .foregroundStyle(notSill ? Color.orange : Palette.muted)
@@ -114,7 +114,7 @@ struct CodeScanner: View {
         } else if !notSill {
             notSill = true
             notSillToken += 1
-            AccessibilityNotification.Announcement("That’s not a Sill code.").post()
+            AccessibilityNotification.Announcement("That’s not a Rimoto code.").post()
         }
     }
 

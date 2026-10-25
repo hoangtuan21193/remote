@@ -22,8 +22,9 @@ import Security
 ///
 /// The items, in either keychain:
 /// - The key: a permanent P-256 private key, application tag `me.saffer.sill.remote.host-key`,
-///   label "Sill Remote Access", looked up by its tag. Only the private key is stored; the public
-///   one is derived from it.
+///   label "Rimoto Remote Access" (upstream's "Sill Remote Access"; the label only names an item
+///   in Keychain Access, so items made before the rename keep the old one and are still found),
+///   looked up by its tag. Only the private key is stored; the public one is derived from it.
 /// - The recognition key: a generic password, service `me.saffer.sill.remote`, account
 ///   `recognition-key`, 32 bytes.
 /// - The trust list: a generic password, same service, account `paired-devices`, JSON.
@@ -59,7 +60,7 @@ import Security
 /// login keychain's own default, as it always did.
 package final class KeychainIdentityStore: IdentityStore {
     static let keyTag = Data("me.saffer.sill.remote.host-key".utf8)
-    static let label = "Sill Remote Access"
+    static let label = "Rimoto Remote Access"
     static let service = "me.saffer.sill.remote"
     static let recognitionAccount = "recognition-key"
     static let pairedAccount = "paired-devices"

@@ -50,8 +50,8 @@ M = [
     ("isLinkLocal: 169/8", F, "        if a.count == 4 { return a[0] == 169 && a[1] == 254 }", "        if a.count == 4 { return a[0] == 169 }"),
     ("isLinkLocal: fe80::/9", F, "        if a.count == 16 { return a[0] == 0xFE && a[1] & 0xC0 == 0x80 }", "        if a.count == 16 { return a[0] == 0xFE && a[1] & 0x80 == 0x80 }"),
     ("label: Not paired capitalised", F, "            if self == .notPaired || self == .openDoor { return \"\\(name), not paired\" }\n", ""),
-    ("hint: Update Sill names no device", F, "            case .updateSill: return \"\\(name)\\u{2019}s Sill is too old for this \\(device).\"",
-     "            case .updateSill: return \"\\(name)\\u{2019}s Sill is too old.\""),
+    ("hint: Update Rimoto names no device", F, "            case .updateSill: return \"\\(name)\\u{2019}s Rimoto is too old for this \\(device).\"",
+     "            case .updateSill: return \"\\(name)\\u{2019}s Rimoto is too old.\""),
     ("word: Not paired lower case", F, "            case .notPaired, .openDoor: return \"Not paired\"", "            case .notPaired, .openDoor: return \"not paired\""),
     # Step 4: sessions and pairing at home over TLS.
     ("pin: an open door's first connection plain", F, "        case .open(nil): return .anyKey", "        case .open(nil): return .plainTCP"),
@@ -98,7 +98,7 @@ M = [
     ("copy: over the cable dropped", F, "            cable ? \"Pairing with \\(mac) over the cable\\u{2026}\" : \"Pairing with \\(mac)\\u{2026}\"", "            \"Pairing with \\(mac)\\u{2026}\""),
     ("copy: removed says the old remote words", F, "        static func removed(mac: String, device: String) -> String { \"\\(mac) removed this \\(device). Tap it to pair again.\" }",
      "        static func removed(mac: String, device: String) -> String { \"\\(mac) removed this \\(device). To use it again, pair it again.\" }"),
-    ("copy: openOnMac names no menu", F, "\"\\(mac) didn\\u{2019}t show a code. On the Mac, choose Pair iPhone or iPad\\u{2026} in the Sill menu, then tap \\(mac) again.\"",
+    ("copy: openOnMac names no menu", F, "\"\\(mac) didn\\u{2019}t show a code. On the Mac, choose Pair iPhone or iPad\\u{2026} in the Rimoto menu, then tap \\(mac) again.\"",
      "\"\\(mac) didn\\u{2019}t show a code.\""),
     # Step 5: the Settings panel's Away from home, and the words of the home card and the overlay at home.
     ("away: a saved Mac's footnote ignores the remote session", F,
@@ -136,10 +136,10 @@ M = [
     ("refusal: an unknown reason read as expired (a tap, not the menu)", F, "        default: return .closed\n        }\n    }\n\n    /// Where a pairing link goes",
      "        default: return .expired\n        }\n    }\n\n    /// Where a pairing link goes"),
     ("copy: a closed code says tap for a new one (as before the review)", F,
-     "            \"That code no longer works. On the Mac, choose Pair iPhone or iPad\\u{2026} in the Sill menu, then tap \\(mac) again.\"",
+     "            \"That code no longer works. On the Mac, choose Pair iPhone or iPad\\u{2026} in the Rimoto menu, then tap \\(mac) again.\"",
      "            \"That code no longer works. Tap \\(mac) for a new one.\""),
     ("copy: an expired code sends to the menu", F, "static func expired(mac: String) -> String { \"That code expired. Tap \\(mac) for a new one.\" }",
-     "static func expired(mac: String) -> String { \"That code expired. On the Mac, choose Pair iPhone or iPad\\u{2026} in the Sill menu, then tap \\(mac) again.\" }"),
+     "static func expired(mac: String) -> String { \"That code expired. On the Mac, choose Pair iPhone or iPad\\u{2026} in the Rimoto menu, then tap \\(mac) again.\" }"),
     # Pair This iPad…'s line from the Mac's answer (the security review, 2026-09-27).
     ("overlayLine: a code said to show whatever the Mac answered (as before the review)", F,
      "        switch answer {\n        case .shown?: return HomeCopy.overlayShowing(mac: mac)\n",

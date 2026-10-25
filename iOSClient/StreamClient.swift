@@ -215,7 +215,7 @@ final class StreamClient: ObservableObject {
     /// access (updateDiscovery); any other status (a disconnect, a failure) stays as it was set.
     static let lookingOnNetwork = "Looking for Macs on this network"
     static let lookingNearby = "Looking for Macs on this network and nearby"
-    static let allowLocalNetwork = "To find your Mac, allow Local Network for Sill in Settings."
+    static let allowLocalNetwork = "To find your Mac, allow Local Network for Rimoto in Settings."
 
     // Switcher catalog, as the host sends it. Published on main.
     @Published var macName = ""

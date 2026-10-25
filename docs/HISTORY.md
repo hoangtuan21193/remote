@@ -4,6 +4,25 @@ The "Current step" log and milestone notes that used to live in CLAUDE.md, moved
 
 ## Current step
 
+**Rimoto on the Mac too, and every visible "Sill" says Rimoto (2026-10-25, branch `strip-gestures`).**
+Asked: "rename the Mac app to Rimoto, why is it still Sill", every word a person sees.
+- Mac: `Packaging/Info.plist` names the bundle and executable Rimoto with the fork's own bundle ID
+  com.hoangtuan.rimoto.mac (it installs beside upstream's Sill.app; permissions, settings and the
+  login item start fresh). `make-app.sh` builds `.build/Rimoto.app` and installs `/Applications/Rimoto.app`;
+  `make-dmg.sh`, `release.sh` and `release.yml` follow. Menus, Settings, status texts, the log window's
+  title, the virtual display's name, the keychain key's label and the messages devices show (kind 22's
+  update refusal, the menus' Accessibility note) say Rimoto.
+- iPhone and iPad: every visible string (connect screen, Add a Mac, pairing words, goodbyes, Settings,
+  tour, remote errors, the clipboard copy) says Rimoto.
+- Kept as Sill on purpose: wire values (ALPNs `sill/1`, `sill-pair/1`, `_sill._tcp`, `sill://pair`,
+  keychain tags and service), every print and log line (the CLI's stdout stays byte-identical), the
+  log path `~/Library/Logs/Sill`, defaults keys, module and type names, the CLI `SillHost`, the
+  download names Sill.dmg / Sill.zip, the update feed and getsill.app (upstream's).
+- Checks updated: device-gate, menus, update-policy, clipboard, goodbye, home-device, home-model,
+  policy, tour; their mutants all caught. Design: the four canvases say Rimoto.
+- Also: the Mac keys bar over the keyboard scrolls when a drag starts on a key (`KeyboardAccessoryBar`'s
+  scroll view takes the touch back from a control); found on the iPhone Duo, F1 to F12 were out of reach.
+
 **Held sideways the menu bar is the one bar; apps change with three fingers, Spaces with four; Aa
 on the Desktop changes the Mac's resolution (2026-10-25, branch `strip-gestures`; a comment on the
 iPhone Duo canvas, decided on a planboard in two rounds, `.planboard/strip-gestures/` with PLAN.md and

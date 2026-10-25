@@ -117,12 +117,12 @@ struct AddMacCard: View {
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.muted)
         } else {
-            Text("Pair once, and Sill reaches your Mac from anywhere, through your VPN or the internet.")
+            Text("Pair once, and Rimoto reaches your Mac from anywhere, through your VPN or the internet.")
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.muted)
                 .fixedSize(horizontal: false, vertical: true)
-            Text(typed ? "Type the address and code that Sill shows on your Mac."
-                       : "On your Mac, choose Pair iPhone or iPad… in the Sill menu, then point this \(device) at the code.")
+            Text(typed ? "Type the address and code that Rimoto shows on your Mac."
+                       : "On your Mac, choose Pair iPhone or iPad… in the Rimoto menu, then point this \(device) at the code.")
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.text)
                 .fixedSize(horizontal: false, vertical: true)

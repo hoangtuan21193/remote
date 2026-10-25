@@ -101,11 +101,11 @@ func plistLines(_ record: DSRecord?) -> [String] {
 
 let release = DMGLayout(width: 660, height: 400, left: 200, top: 120, iconSize: 128, textSize: 12,
                         background: ".background/background.tiff", backgroundColor: (255, 255, 255),
-                        items: [.init(name: "Sill.app", x: 170, y: 180), .init(name: "Applications", x: 490, y: 180)],
+                        items: [.init(name: "Rimoto.app", x: 170, y: 180), .init(name: "Applications", x: 490, y: 180)],
                         hidden: [".background", ".VolumeIcon.icns"])
 let releaseArguments = ["--window", "660x400", "--position", "200,120", "--icon-size", "128", "--text-size", "12",
                         "--background", ".background/background.tiff", "--background-color", "ffffff",
-                        "--item", "Sill.app=170,180", "--item", "Applications=490,180",
+                        "--item", "Rimoto.app=170,180", "--item", "Applications=490,180",
                         "--hidden", ".background", "--hidden", ".VolumeIcon.icns"]
 let fromScript = ((try? String(contentsOfFile: layoutFile, encoding: .utf8)) ?? "").split(separator: "\n").map(String.init)
 check("make-dmg.sh: its layout is the one checked here", fromScript == releaseArguments,
@@ -273,7 +273,7 @@ check("leaf: the records read, and every byte after them in the page is zero", p
 let recs = parsed?.records ?? []
 check("records: the folder's four, then each icon's place, sorted by name without regard to case, then by code",
       recs.map { "\($0.name) \($0.code) \($0.type)" } == [". bwsp blob", ". icvp blob", ". vSrn long", ". vstl type", ".background Iloc blob",
-                                                          ".VolumeIcon.icns Iloc blob", "Applications Iloc blob", "Sill.app Iloc blob"],
+                                                          ".VolumeIcon.icns Iloc blob", "Applications Iloc blob", "Rimoto.app Iloc blob"],
       "(\(recs.map { "\($0.name) \($0.code)" }))")
 func record(_ name: String, _ code: String) -> Rec? { recs.first { $0.name == name && $0.code == code } }
 let bwspWant = ["ContainerShowSidebar: bool false", "PreviewPaneVisibility: bool false", "ShowPathbar: bool false",
@@ -291,7 +291,7 @@ check("vSrn: 1", record(".", "vSrn")?.value == [0, 0, 0, 1])
 check("vstl: icon view (icnv), whatever the Mac's default view", record(".", "vstl")?.value == Array("icnv".utf8))
 func iloc(_ x: UInt32, _ y: UInt32) -> [UInt8] { words([16, x, y]) + [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0] }
 check("Iloc: Sill.app's centre at (170, 180), the arrow's tail, then the eight bytes Finder writes",
-      record("Sill.app", "Iloc")?.value == iloc(170, 180))
+      record("Rimoto.app", "Iloc")?.value == iloc(170, 180))
 check("Iloc: Applications at (490, 180), the arrow's head", record("Applications", "Iloc")?.value == iloc(490, 180))
 check("Iloc: .background and .VolumeIcon.icns in a row below the 400 points, out of sight",
       record(".background", "Iloc")?.value == iloc(128, 656) && record(".VolumeIcon.icns", "Iloc")?.value == iloc(316, 656))

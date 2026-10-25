@@ -10,7 +10,7 @@ artboard in the same change, and the other way round.
 | iPhone (402×874, 17 Pro) | https://claude.ai/artifact/BfwySRCcdAt1Fq77ysBEty | `iphone/` |
 | iPad (744×1133, mini) | https://claude.ai/artifact/7SquPwJcDScq13HnTUVar1 | `ipad/` |
 | iPhone Duo (inner 951×669, cover 466×678) | https://claude.ai/artifact/GNodnPMzhbmAaVxg39jB2x | `iphone-duo/` |
-| Mac (Sill.app, light) | https://claude.ai/artifact/CuHyhiTKiGhsFPcQa4h3Lq | `mac/` |
+| Mac (Rimoto.app, light) | https://claude.ai/artifact/CuHyhiTKiGhsFPcQa4h3Lq | `mac/` |
 
 The canvases are private to their owner until shared from the page's Share menu.
 

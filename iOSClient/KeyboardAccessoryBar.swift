@@ -43,7 +43,7 @@ final class KeyboardAccessoryBar: UIView {
         return keys
     }()
 
-    private let scroll = UIScrollView()
+    private let scroll = KeyScroll()
     private let row = UIStackView()
     private var modifierButtons: [(button: UIButton, flag: KeyModifiers, label: String, lock: UIView)] = []
     /// The key held down that repeats, and its timer.
@@ -216,6 +216,15 @@ final class KeyboardAccessoryBar: UIView {
         repeating = nil
         if press, !repeated { self.press(held.usage) }
         repeated = false
+    }
+
+    /// The row's scroll view: a drag that starts on a key still scrolls the row. The keys fill it, and
+    /// UIScrollView by default never takes a touch back from a control (`touchesShouldCancel(in:)`
+    /// false for a UIControl), so with `delaysContentTouches` off the row never moved under a finger
+    /// (found on the iPhone Duo, 2026-10-25: F1 to F12 out of reach). A key's own action waits for its
+    /// touch's end, and an arrow's repeat stops on the cancel.
+    private final class KeyScroll: UIScrollView {
+        override func touchesShouldCancel(in view: UIView) -> Bool { true }
     }
 
     /// The row's fade under the hide button's left edge.
